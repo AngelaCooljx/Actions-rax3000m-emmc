@@ -1,0 +1,369 @@
+From 2ca4dd1bc190c71a890747dd7b14f918c0a60946 Mon Sep 17 00:00:00 2001
+From: AngelaCooljx <cool@gayhub.eu.org>
+Date: Sat, 2 Sep 2023 12:26:29 +0800
+Subject: [PATCH 1/4] mediatek: add CMCC RAX3000M EMMC version support
+
+Reference https://github.com/lgs2007m/immortalwrt-mt798x-rax3000m-emmc/commit/fab896f0b5f22de6967c701fd4b0a73e10f3f7c5 and https://github.com/AngelaCooljx/gl_rax3000m-emmc/blob/a30969f2aaceb739bec751e47597f629d8850a99/patches-23.05/4002-GL-XE3000-adapted-to-GL.iNet-SDK-4.x.patch
+---
+ .../dts/mt7981b-cmcc-rax3000m-emmc.dts        | 222 ++++++++++++++++++
+ .../filogic/base-files/etc/board.d/02_network |   6 +
+ .../etc/hotplug.d/firmware/11-mt76-caldata    |   7 +
+ .../etc/hotplug.d/ieee80211/11_fix_wifi_mac   |   5 +
+ .../base-files/lib/upgrade/platform.sh        |  15 ++
+ target/linux/mediatek/image/filogic.mk        |  13 +
+ 6 files changed, 268 insertions(+)
+ create mode 100644 target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts
+
+diff --git a/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts b/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts
+new file mode 100644
+index 0000000000..e68a449a38
+--- /dev/null
++++ b/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts
+@@ -0,0 +1,222 @@
++// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
++
++/dts-v1/;
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/input/input.h>
++
++#include "mt7981.dtsi"
++
++/ {
++	model = "CMCC RAX3000M EMMC version";
++	compatible = "cmcc,rax3000m-emmc", "mediatek,mt7981";
++
++	aliases {
++		led-boot = &red_led;
++		led-failsafe = &red_led;
++		led-running = &green_led;
++		led-upgrade = &blue_led;
++		serial0 = &uart0;
++	};
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++		bootargs = "console=ttyS0,115200n1 loglevel=8  \
++				earlycon=uart8250,mmio32,0x11002000 \
++				root=PARTLABEL=rootfs rootwait";
++	};
++
++	memory {
++		reg = <0 0x40000000 0 0x10000000>;
++	};
++
++	reg_3p3v: regulator-3p3v {
++		compatible = "regulator-fixed";
++		regulator-name = "fixed-3.3V";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		regulator-boot-on;
++		regulator-always-on;
++	};
++
++	gpio-keys {
++		compatible = "gpio-keys";
++
++		button-reset {
++			label = "reset";
++			linux,code = <KEY_RESTART>;
++			gpios = <&pio 1 GPIO_ACTIVE_LOW>;
++		};
++
++		button-mesh {
++			label = "mesh";
++			linux,code = <BTN_9>;
++			linux,input-type = <EV_SW>;
++			gpios = <&pio 0 GPIO_ACTIVE_LOW>;
++		};
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		red_led: red {
++			label = "rax3000m:red";
++			gpios = <&pio 35 GPIO_ACTIVE_LOW>;
++		};
++
++		blue_led: blue {
++			label = "rax3000m:blue";
++			gpios = <&pio 12 GPIO_ACTIVE_LOW>;
++		};
++
++		green_led: green {
++			label = "rax3000m:green";
++			gpios = <&pio 9 GPIO_ACTIVE_LOW>;
++		};
++	};
++};
++
++&uart0 {
++	status = "okay";
++};
++
++&watchdog {
++	status = "okay";
++};
++
++&mmc0 {
++         pinctrl-names = "default", "state_uhs";
++         pinctrl-0 = <&mmc0_pins_default>;
++         pinctrl-1 = <&mmc0_pins_uhs>;
++         bus-width = <8>;
++         max-frequency = <52000000>;
++         cap-mmc-highspeed;
++         vmmc-supply = <&reg_3p3v>;
++         non-removable;
++         status = "okay";
++};
++
++&eth {
++	status = "okay";
++
++	gmac0: mac@0 {
++		compatible = "mediatek,eth-mac";
++		reg = <0>;
++		phy-mode = "2500base-x";
++
++		fixed-link {
++			speed = <2500>;
++			full-duplex;
++			pause;
++		};
++	};
++
++	gmac1: mac@1 {
++		compatible = "mediatek,eth-mac";
++		reg = <1>;
++		phy-mode = "gmii";
++		phy-handle = <&phy0>;
++	};
++
++	mdio: mdio-bus {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		phy0: ethernet-phy@0 {
++			compatible = "ethernet-phy-id03a2.9461";
++			reg = <0>;
++			phy-mode = "gmii";
++			nvmem-cells = <&phy_calibration>;
++			nvmem-cell-names = "phy-cal-data";
++		};
++	};
++};
++
++&mdio_bus {
++	switch: switch@0 {
++		compatible = "mediatek,mt7531";
++		reg = <31>;
++		reset-gpios = <&pio 39 GPIO_ACTIVE_HIGH>;
++		interrupt-controller;
++		#interrupt-cells = <1>;
++		interrupt-parent = <&pio>;
++		interrupts = <38 IRQ_TYPE_LEVEL_HIGH>;
++	};
++};
++
++&spi1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&spic_pins>;
++	status = "disabled";
++};
++
++&switch {
++	ports {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		port@0 {
++			reg = <0>;
++			label = "lan3";
++		};
++
++		port@1 {
++			reg = <1>;
++			label = "lan2";
++		};
++
++		port@2 {
++			reg = <2>;
++			label = "lan1";
++		};
++
++		port@6 {
++			reg = <6>;
++			ethernet = <&gmac0>;
++			phy-mode = "2500base-x";
++
++			fixed-link {
++				speed = <2500>;
++				full-duplex;
++				pause;
++			};
++		};
++	};
++};
++
++&pio {
++	spic_pins: spi1-pins {
++		mux {
++			function = "spi";
++			groups = "spi1_1";
++		};
++		};
++
++	mmc0_pins_default: mmc0-pins-default {
++		mux {
++			function = "flash";
++			groups = "emmc_45";
++		};
++		};
++
++	mmc0_pins_uhs: mmc0-pins-uhs {
++		mux {
++			function = "flash";
++			groups = "emmc_45";
++		};
++	};
++};
++
++&usb_phy {
++	status = "okay";
++};
++
++&xhci {
++	mediatek,u3p-dis-msk = <0x0>;
++	phys = <&u2port0 PHY_TYPE_USB2>,
++	       <&u3port0 PHY_TYPE_USB3>;
++	status = "okay";
++};
++
++&wifi {
++	status = "okay";
++};
+diff --git a/target/linux/mediatek/filogic/base-files/etc/board.d/02_network b/target/linux/mediatek/filogic/base-files/etc/board.d/02_network
+index 0b82b5fde3..4dfcc10523 100644
+--- a/target/linux/mediatek/filogic/base-files/etc/board.d/02_network
++++ b/target/linux/mediatek/filogic/base-files/etc/board.d/02_network
+@@ -33,6 +33,7 @@ mediatek_setup_interfaces()
+ 	glinet,gl-mt3000)
+ 		ucidef_set_interfaces_lan_wan eth1 eth0
+ 		;;
++	cmcc,rax3000m-emmc|\
+ 	cmcc,rax3000m-nand-ubootmod|\
+ 	h3c,magic-nx30-pro|\
+ 	h3c,magic-nx30-pro-nmbm|\
+@@ -89,6 +90,11 @@ mediatek_setup_macs()
+ 	bananapi,bpi-r3)
+ 		wan_mac=$(macaddr_add $(cat /sys/class/net/eth0/address) 1)
+ 		;;
++	cmcc,rax3000m-emmc)
++		label_mac=$(mmc_get_mac_binary factory 0x4)
++		wan_mac=$(macaddr_add "$label_mac" -2)
++		lan_mac=$(macaddr_add "$label_mac" -1)
++		;;
+ 	h3c,magic-nx30-pro|\
+ 	h3c,magic-nx30-pro-nmbm)
+ 		wan_mac=$(mtd_get_mac_ascii pdt_data_1 ethaddr)
+diff --git a/target/linux/mediatek/filogic/base-files/etc/hotplug.d/firmware/11-mt76-caldata b/target/linux/mediatek/filogic/base-files/etc/hotplug.d/firmware/11-mt76-caldata
+index c3d7c09974..c4e78d0995 100644
+--- a/target/linux/mediatek/filogic/base-files/etc/hotplug.d/firmware/11-mt76-caldata
++++ b/target/linux/mediatek/filogic/base-files/etc/hotplug.d/firmware/11-mt76-caldata
+@@ -7,6 +7,13 @@
+ board=$(board_name)
+ 
+ case "$FIRMWARE" in
++"mediatek/mt7981_eeprom_mt7976_dbdc.bin")
++	case "$board" in
++	cmcc,rax3000m-emmc)
++		caldata_extract_mmc "factory" 0x0 0x1000
++		;;
++	esac
++	;;
+ "mediatek/mt7916_eeprom.bin")
+ 	case "$board" in
+ 	acer,predator-w6)
+diff --git a/target/linux/mediatek/filogic/base-files/etc/hotplug.d/ieee80211/11_fix_wifi_mac b/target/linux/mediatek/filogic/base-files/etc/hotplug.d/ieee80211/11_fix_wifi_mac
+index 3759ef3fe8..e55af3134b 100644
+--- a/target/linux/mediatek/filogic/base-files/etc/hotplug.d/ieee80211/11_fix_wifi_mac
++++ b/target/linux/mediatek/filogic/base-files/etc/hotplug.d/ieee80211/11_fix_wifi_mac
+@@ -35,6 +35,11 @@ case "$board" in
+ 		[ "$PHYNBR" = "0" ] && macaddr_add $addr 1 > /sys${DEVPATH}/macaddress
+ 		[ "$PHYNBR" = "1" ] && macaddr_add $addr 2 > /sys${DEVPATH}/macaddress
+ 		;;
++	cmcc,rax3000m-emmc)
++		addr=$(mmc_get_mac_binary factory 0x4)
++		[ "$PHYNBR" = "0" ] && echo "$addr" > /sys${DEVPATH}/macaddress
++		[ "$PHYNBR" = "1" ] && macaddr_add $addr 1 > /sys${DEVPATH}/macaddress
++		;;
+ 	cmcc,rax3000m-nand-ubootmod)
+ 		[ "$PHYNBR" = "1" ] && mtd_get_mac_binary Factory 0xa > /sys${DEVPATH}/macaddress
+ 		;;
+diff --git a/target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh b/target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh
+index f9f71a2b39..fc7a6e8897 100755
+--- a/target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh
++++ b/target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh
+@@ -81,6 +81,9 @@ platform_do_upgrade() {
+ 			;;
+ 		esac
+ 		;;
++	cmcc,rax3000m-emmc)
++		emmc_do_upgrade "$1"
++		;;
+ 	cudy,wr3000-v1)
+ 		default_do_upgrade "$1"
+ 		;;
+@@ -126,6 +129,15 @@ platform_check_image() {
+ 		}
+ 		return 0
+ 		;;
++	cmcc,rax3000m-emmc)
++		# tar magic `ustar`
++		magic="$(dd if="$1" bs=1 skip=257 count=5 2>/dev/null)"
++		[ "$magic" != "ustar" ] && {
++			echo "Invalid image type."
++			return 1
++		}
++		return 0
++		;;
+ 	*)
+ 		nand_do_platform_check "$board" "$1"
+ 		return $?
+@@ -144,6 +156,9 @@ platform_copy_config() {
+ 			;;
+ 		esac
+ 		;;
++	cmcc,rax3000m-emmc)
++		emmc_copy_config
++		;;
+ 	esac
+ }
+ 
+diff --git a/target/linux/mediatek/image/filogic.mk b/target/linux/mediatek/image/filogic.mk
+index 5d6f3c6156..a318bb9f74 100644
+--- a/target/linux/mediatek/image/filogic.mk
++++ b/target/linux/mediatek/image/filogic.mk
+@@ -185,6 +185,19 @@ define Device/cetron_ct3003-ubootmod
+ endef
+ TARGET_DEVICES += cetron_ct3003-ubootmod
+ 
++define Device/cmcc_rax3000m-emmc
++  DEVICE_VENDOR := CMCC
++  DEVICE_MODEL := RAX3000M EMMC
++  DEVICE_DTS := mt7981b-cmcc-rax3000m-emmc
++  DEVICE_DTS_DIR := ../dts
++  SUPPORTED_DEVICES := cmcc,rax3000m-emmc
++  DEVICE_PACKAGES :=  kmod-mt7981-firmware mt7981-wo-firmware \
++  automount e2fsprogs mkf2fs blkid blockdev gdisk fdisk losetup \
++  kmod-fs-f2fs kmod-mmc kmod-nls-iso8859-1 kmod-usb3
++  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
++endef
++TARGET_DEVICES += cmcc_rax3000m-emmc
++
+ define Device/cmcc_rax3000m-nand-ubootmod
+   DEVICE_VENDOR := CMCC
+   DEVICE_MODEL := RAX3000M NAND version (custom U-Boot layout)
+-- 
+2.39.2
+
