@@ -1,33 +1,31 @@
-**English** | [中文](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
+# Actions-rax3000m-emmc
+使用 GitHub Actions 在线编译定制 CMCC RAX3000M EMMC 版本的 ImmortalWrt-23.05-SNAPSHOT 固件
 
-# Actions-OpenWrt
+## 使用说明
+每日 19 时自动执行或在 Actions 选择该工作流手动点击 Run workflow 执行编译，等待固件编译完成上传至 releases 发布即可下载
 
-[![LICENSE](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-square&label=LICENSE)](https://github.com/P3TERX/Actions-OpenWrt/blob/master/LICENSE)
-![GitHub Stars](https://img.shields.io/github/stars/P3TERX/Actions-OpenWrt.svg?style=flat-square&label=Stars&logo=github)
-![GitHub Forks](https://img.shields.io/github/forks/P3TERX/Actions-OpenWrt.svg?style=flat-square&label=Forks&logo=github)
+默认 LAN IP 已更改为 `192.168.6.1`，可在 `scripts/diy.sh` 处修改
 
-A template for building OpenWrt with GitHub Actions
+固件默认选中软件包
+`kmod-mt7981-firmware, mt7981-wo-firmware, automount, e2fsprogs, mkf2fs, blkid, blockdev, gdisk, fdisk, losetup, kmod-fs-f2fs, kmod-mmc, kmod-nls-iso8859-1, kmod-usb3`
 
-## Usage
+添加集成软件包
+`f2fs-tools, htop, kmod-fuse, kmod-usb-net-ipheth, kmod-usb-net-rndis, luci-app-argon-config, luci-app-aria2, luci-app-autoreboot, luci-app-ddns-go, luci-app-diskman, luci-app-filebrowser, luci-app-ksmbd, luci-app-openclash, luci-app-openvpn, luci-app-ttyd, luci-app-unblockneteasemusic, luci-app-upnp, luci-app-usb-printer, luci-app-zerotier, luci-theme-argon`
+并预置 openclash 内核
 
-- Click the [Use this template](https://github.com/P3TERX/Actions-OpenWrt/generate) button to create a new repository.
-- Generate `.config` files using [Lean's OpenWrt](https://github.com/coolsnowwolf/lede) source code. ( You can change it through environment variables in the workflow file. )
-- Push `.config` file to the GitHub repository.
-- Select `Build OpenWrt` on the Actions page.
-- Click the `Run workflow` button.
-- When the build is complete, click the `Artifacts` button in the upper right corner of the Actions page to download the binaries.
+需要取消集成或添加其他软件包可在 `configs/rax3000m-emmc.config` 处参考注释内容自行修改或添加配置
 
-## Tips
-
-- It may take a long time to create a `.config` file and build the OpenWrt firmware. Thus, before create repository to build your own firmware, you may check out if others have already built it which meet your needs by simply [search `Actions-Openwrt` in GitHub](https://github.com/search?q=Actions-openwrt).
-- Add some meta info of your built firmware (such as firmware architecture and installed packages) to your repository introduction, this will save others' time.
+部分机器使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，需要在 Run workflow 时勾选 **Use 26MHz max-frequency** 重新编译刷入使用，或在工作流配置文件中将 `USE_26MHZ` 中 `default: 'false'` 的 false 改为 true
 
 ## Credits
-
+- [XiaoBinin/Actions-immortalwrt](https://github.com/XiaoBinin/Actions-immortalwrt)
+- [hanwckf/immortalwrt-mt798x](https://github.com/hanwckf/immortalwrt-mt798x)
+- [lgs2007m/immortalwrt-mt798x-rax3000m-emmc](https://github.com/lgs2007m/immortalwrt-mt798x-rax3000m-emmc)
+- [GL-iNet](https://github.com/gl-inet)
 - [Microsoft Azure](https://azure.microsoft.com)
 - [GitHub Actions](https://github.com/features/actions)
 - [OpenWrt](https://github.com/openwrt/openwrt)
-- [Lean's OpenWrt](https://github.com/coolsnowwolf/lede)
+- [ImmortalWrt](https://github.com/immortalwwrt/immortalwrt)
 - [tmate](https://github.com/tmate-io/tmate)
 - [mxschmitt/action-tmate](https://github.com/mxschmitt/action-tmate)
 - [csexton/debugger-action](https://github.com/csexton/debugger-action)
