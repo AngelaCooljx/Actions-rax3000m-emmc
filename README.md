@@ -1,10 +1,8 @@
 # Actions-rax3000m-emmc
 使用 GitHub Actions 在线编译定制 CMCC RAX3000M EMMC 版本的 ImmortalWrt-23.05-SNAPSHOT 固件
 
-## 使用说明
-每日 19 时自动执行或在 Actions 选择该工作流手动点击 Run workflow 执行编译，等待固件编译完成上传至 releases 发布即可下载
-
-默认 LAN IP 已更改为 `192.168.6.1`，可在 `scripts/diy.sh` 处修改
+## 固件特性
+使用 ImmortalWrt 官方仓库，开源驱动，openwrt-23.05 分支源码编译，软件包均可在线安装。
 
 固件默认选中软件包
 `kmod-mt7981-firmware, mt7981-wo-firmware, automount, e2fsprogs, mkf2fs, blkid, blockdev, gdisk, fdisk, losetup, kmod-fs-f2fs, kmod-mmc, kmod-nls-iso8859-1, kmod-usb3`
@@ -13,9 +11,16 @@
 `f2fs-tools, htop, kmod-fuse, kmod-usb-net-ipheth, kmod-usb-net-rndis, luci-app-argon-config, luci-app-autoreboot,  luci-app-diskman, luci-app-ksmbd, luci-app-openclash, luci-app-openvpn, luci-app-ttyd, luci-app-upnp, luci-app-usb-printer, luci-app-zerotier, luci-theme-argon`
 并预置 openclash 内核
 
+**如需在线安装 kmod 内核模块类型软件包，你需要在 http://mirrors.pku.edu.cn/immortalwrt/releases/23.05-SNAPSHOT/targets/mediatek/filogic/packages/ 处手动查找安装 "kernel_5.15.*-1-*_aarch64_cortex-a53.ipk" 该软件包，之后即可正常在线安装其他 kmod 软件包**
+
+## 使用说明
+每日 19 时自动执行或在 Actions 选择该工作流手动点击 Run workflow 执行编译，等待固件编译完成上传至 releases 发布即可下载
+
+默认 LAN IP 已更改为 `192.168.6.1`，可在 `scripts/diy.sh` 处修改
+
 需要取消集成或添加其他软件包可在 `configs/rax3000m-emmc.config` 处参考注释内容自行修改或添加配置
 
-部分机器使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，需要在 Run workflow 时勾选 **Use 26MHz max-frequency** 重新编译刷入使用，或在工作流配置文件中将 `USE_26MHZ` 中 `default: 'false'` 的 false 改为 true
+Actions 默认编译 52 MHz 版本，部分机器使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，需要在 Run workflow 时勾选 **Use 26MHz max-frequency** 重新编译刷入使用，或在工作流配置文件中将 `USE_26MHZ` 中 `default: 'false'` 的 false 改为 true
 
 ## Credits
 - [XiaoBinin/Actions-immortalwrt](https://github.com/XiaoBinin/Actions-immortalwrt)
