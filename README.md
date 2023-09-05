@@ -2,13 +2,13 @@
 使用 GitHub Actions 在线编译定制 CMCC RAX3000M EMMC 版本的 ImmortalWrt-23.05-SNAPSHOT 固件
 
 ## 固件特性
-使用 ImmortalWrt 官方仓库，openwrt-23.05 分支源码编译，无线使用 mt76 开源驱动，主线已支持硬件加速，内核版本 5.15，软件包支持在线安装。
+使用 [ImmortalWrt 官方仓库](https://github.com/immortalwrt/immortalwrt/tree/openwrt-23.05)，openwrt-23.05 分支源码编译，无线使用 mt76 开源驱动，主线已支持硬件加速，内核版本 5.15，软件包支持在线安装。
 
 固件默认选中软件包
 `kmod-mt7981-firmware, mt7981-wo-firmware, automount, e2fsprogs, mkf2fs, blkid, blockdev, gdisk, fdisk, losetup, kmod-fs-f2fs, kmod-mmc, kmod-nls-iso8859-1, kmod-usb3`
 
 添加集成软件包
-`f2fs-tools, htop, openssl-util, kmod-fuse, kmod-usb-net-ipheth, kmod-usb-net-rndis, luci-app-argon-config, luci-app-autoreboot,  luci-app-diskman, luci-app-ksmbd, luci-app-openclash, luci-app-openvpn, luci-app-ttyd, luci-app-upnp, luci-app-usb-printer, luci-app-zerotier, luci-theme-argon`
+`f2fs-tools, htop, openssl-util, kmod-fuse, kmod-usb-net-ipheth, kmod-usb-net-rndis, luci-app-argon-config, luci-app-autoreboot, luci-app-diskman, luci-app-ksmbd, luci-app-openclash, luci-app-openvpn, luci-app-ttyd, luci-app-upnp, luci-app-usb-printer, luci-app-zerotier, luci-theme-argon`
 并预置 openclash 内核
 
 **如需在线安装 kmod 内核模块类型软件包，你需要在 http://mirrors.pku.edu.cn/immortalwrt/releases/23.05-SNAPSHOT/targets/mediatek/filogic/packages/ 处手动查找下载 "kernel_5.15.\*-1-\*_aarch64_cortex-a53.ipk" 该软件包并上传安装，之后即可正常在线安装其他 kmod 软件包**
@@ -33,7 +33,7 @@ Actions 默认编译 52 MHz 版本，部分机器使用默认 52 MHz 闪存频�
 - [Microsoft Azure](https://azure.microsoft.com)
 - [GitHub Actions](https://github.com/features/actions)
 - [OpenWrt](https://github.com/openwrt/openwrt)
-- [ImmortalWrt](https://github.com/immortalwwrt/immortalwrt)
+- [ImmortalWrt](https://github.com/immortalwrt/immortalwrt)
 - [tmate](https://github.com/tmate-io/tmate)
 - [mxschmitt/action-tmate](https://github.com/mxschmitt/action-tmate)
 - [csexton/debugger-action](https://github.com/csexton/debugger-action)
