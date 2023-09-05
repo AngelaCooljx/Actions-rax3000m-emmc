@@ -10,7 +10,7 @@
 `kmod-mt7981-firmware, mt7981-wo-firmware, automount, e2fsprogs, mkf2fs, blkid, blockdev, gdisk, fdisk, losetup, kmod-fs-f2fs, kmod-mmc, kmod-nls-iso8859-1, kmod-usb3`
 
 添加集成软件包
-`f2fs-tools, htop, kmod-fuse, kmod-usb-net-ipheth, kmod-usb-net-rndis, luci-app-argon-config, luci-app-aria2, luci-app-autoreboot, luci-app-ddns-go, luci-app-diskman, luci-app-filebrowser, luci-app-ksmbd, luci-app-openclash, luci-app-openvpn, luci-app-ttyd, luci-app-unblockneteasemusic, luci-app-upnp, luci-app-usb-printer, luci-app-zerotier, luci-theme-argon`
+`f2fs-tools, htop, kmod-fuse, kmod-usb-net-ipheth, kmod-usb-net-rndis, luci-app-argon-config, luci-app-autoreboot,  luci-app-diskman, luci-app-ksmbd, luci-app-openclash, luci-app-openvpn, luci-app-ttyd, luci-app-upnp, luci-app-usb-printer, luci-app-zerotier, luci-theme-argon`
 并预置 openclash 内核
 
 需要取消集成或添加其他软件包可在 `configs/rax3000m-emmc.config` 处参考注释内容自行修改或添加配置
