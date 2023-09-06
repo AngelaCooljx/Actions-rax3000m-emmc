@@ -1,6 +1,6 @@
-From 2ca4dd1bc190c71a890747dd7b14f918c0a60946 Mon Sep 17 00:00:00 2001
+From d648cc7faab62153571887d08f2c29ed1e2e7371 Mon Sep 17 00:00:00 2001
 From: AngelaCooljx <cool@gayhub.eu.org>
-Date: Sat, 2 Sep 2023 12:26:29 +0800
+Date: Mon, 4 Sep 2023 20:57:09 +0800
 Subject: [PATCH 1/4] mediatek: add CMCC RAX3000M EMMC version support
 
 Reference https://github.com/lgs2007m/immortalwrt-mt798x-rax3000m-emmc/commit/fab896f0b5f22de6967c701fd4b0a73e10f3f7c5 and https://github.com/AngelaCooljx/gl_rax3000m-emmc/blob/a30969f2aaceb739bec751e47597f629d8850a99/patches-23.05/4002-GL-XE3000-adapted-to-GL.iNet-SDK-4.x.patch
@@ -16,7 +16,7 @@ Reference https://github.com/lgs2007m/immortalwrt-mt798x-rax3000m-emmc/commit/fa
 
 diff --git a/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts b/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts
 new file mode 100644
-index 0000000000..e68a449a38
+index 0000000000..13c21d8fd1
 --- /dev/null
 +++ b/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts
 @@ -0,0 +1,222 @@
@@ -106,15 +106,15 @@ index 0000000000..e68a449a38
 +};
 +
 +&mmc0 {
-+         pinctrl-names = "default", "state_uhs";
-+         pinctrl-0 = <&mmc0_pins_default>;
-+         pinctrl-1 = <&mmc0_pins_uhs>;
-+         bus-width = <8>;
-+         max-frequency = <52000000>;
-+         cap-mmc-highspeed;
-+         vmmc-supply = <&reg_3p3v>;
-+         non-removable;
-+         status = "okay";
++	pinctrl-names = "default", "state_uhs";
++	pinctrl-0 = <&mmc0_pins_default>;
++	pinctrl-1 = <&mmc0_pins_uhs>;
++	bus-width = <8>;
++	max-frequency = <52000000>;
++	cap-mmc-highspeed;
++	vmmc-supply = <&reg_3p3v>;
++	non-removable;
++	status = "okay";
 +};
 +
 +&eth {
