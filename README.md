@@ -15,8 +15,6 @@
 
 **如需在线安装 kmod 内核模块类型软件包，你需要在 http://mirrors.pku.edu.cn/immortalwrt/releases/23.05-SNAPSHOT/targets/mediatek/filogic/packages/ 处手动查找下载 "kernel_5.15.\*-1-\*_aarch64_cortex-a53.ipk" 该软件包并上传安装，之后即可正常在线安装其他 kmod 软件包**
 
-当前仅存问题有“不保留配置”更新固件时不会清除 rootfs_data 数据，若不想保留数据更新固件，你需要在更新后手动恢复出厂设置一遍或长按 Reset 重置即可解决。
-
 ## 使用说明
 每周日 19 时自动执行或在 Actions 选择该工作流手动点击 Run workflow 执行编译，等待固件编译完成上传至 releases 发布即可下载
 
