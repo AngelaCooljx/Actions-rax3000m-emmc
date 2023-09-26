@@ -88,9 +88,6 @@ jobs:
         [ -e files ] && mv files openwrt/files
         cat configs/rax3000m-emmc.config >> openwrt/.config
         cd openwrt
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "github-actions[bot]"
-        git am $GITHUB_WORKSPACE/patches/*.patch
         chmod +x $GITHUB_WORKSPACE/$CLASH_CORE && $GITHUB_WORKSPACE/$CLASH_CORE
         make defconfig
         make download -j8 V=10
@@ -98,10 +95,10 @@ jobs:
         find dl -size -1024c -exec rm -f {} \;
 
     - name: 设置 dts 闪存频率
-      if: env.USE_26MHZ == 'true'
+      if: env.USE_26MHZ == 'false'
       run: |
-        sed -i 's/52000000/26000000/g' openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts
-        grep max-frequency openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts
+        sed -i 's/26000000/52000000/g' openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts
+        grep max-frequency openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts
 
     - name: 编译固件中
       id: compile
@@ -145,10 +142,10 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && steps.compile.outputs.status == 'success' && !cancelled()
       run: |
-        echo -e "✅ immortalwrt-23.05-SNAPSHOT-rax3000m-emmc" >> release.txt
-        max_frequency=$(($(grep -oP "max-frequency = <\K[0-9]*" openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc.dts) / 1000000))
+        echo -e "✅ immortalwrt-23.05-SNAPSHOT-rax3000m-emmc-ubootmod" >> release.txt
+        max_frequency=$(($(grep -oP "max-frequency = <\K[0-9]*" openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts) / 1000000))
         echo "使用闪存频率: ${max_frequency}MHz" >> release.txt
-        echo "release_tag=$(date +"%Y.%m.%d-23.05-rax3000m-emmc-${max_frequency}MHz")" >> $GITHUB_OUTPUT
+        echo "release_tag=$(date +"%Y.%m.%d-23.05-rax3000m-emmc-ubootmod-${max_frequency}MHz")" >> $GITHUB_OUTPUT
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传固件发布

@@ -1,11 +1,13 @@
-# Actions-rax3000m-emmc
-使用 GitHub Actions 在线编译定制 CMCC RAX3000M EMMC 版本的 ImmortalWrt-23.05-SNAPSHOT 固件
+# Actions-rax3000m-emmc-ubootmod
+使用 GitHub Actions 在线编译定制 CMCC RAX3000M EMMC (ubootmod) 版本的 ImmortalWrt-23.05-SNAPSHOT 固件
+
+**得益于 @1715173329 的提交 [b587b57](https://github.com/immortalwrt/immortalwrt/commit/b587b57d8f1a33925e473af38bc4c17f80af0417) ，ImmortalWrt 官方现已支持 CMCC RAX3000M EMMC 版本固件编译使用**
 
 ## 固件特性
 使用 [ImmortalWrt 官方仓库](https://github.com/immortalwrt/immortalwrt/tree/openwrt-23.05)，openwrt-23.05 分支源码编译，无线使用 mt76 开源驱动，主线已支持硬件加速，内核版本 5.15，软件包支持在线安装。
 
 固件默认选中软件包
-`kmod-mt7981-firmware, mt7981-wo-firmware, automount, e2fsprogs, mkf2fs, blkid, blockdev, gdisk, fdisk, losetup, kmod-fs-f2fs, kmod-mmc, kmod-nls-iso8859-1, kmod-usb3`
+`kmod-mt7981-firmware, mt7981-wo-firmware, kmod-usb3, automount, f2fsck, mkf2fs`
 
 添加集成软件包
 `f2fs-tools, htop, openssl-util, kmod-fuse, kmod-usb-net-ipheth, kmod-usb-net-rndis, luci-app-argon-config, luci-app-autoreboot, luci-app-diskman, luci-app-ksmbd, luci-app-openclash, luci-app-openvpn, luci-app-ttyd, luci-app-upnp, luci-app-usb-printer, luci-app-zerotier, luci-theme-argon`
