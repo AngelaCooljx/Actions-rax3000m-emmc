@@ -22,7 +22,7 @@
 
 需要取消集成或添加其他软件包可在 `configs/rax3000m-emmc.config` 处参考注释内容自行修改或添加配置
 
-**Actions 默认编译 52 MHz 版本，部分机器使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，甚至可能无法正常启动，你可以在 [Release](https://github.com/AngelaCooljx/Actions-rax3000m-emmc/releases) 处查找 26 MHz 版本固件。自行构建需要在 Run workflow 时勾选 “Use 26MHz max-frequency” 重新编译刷入使用，或在工作流配置文件中将 `USE_26MHZ` 中 `default: 'false'` 的 false 改为 true**
+**Actions 默认编译 52 MHz 版本，部分机器因闪存体质差异，使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，甚至可能无法正常启动，你可以在 [Release](https://github.com/AngelaCooljx/Actions-rax3000m-emmc/releases) 处查找 26 MHz 版本固件。自行构建需要在 Run workflow 时勾选 “Use 26MHz max-frequency” 重新编译刷入使用，或在工作流配置文件中将 `USE_26MHZ` 中 `default: 'false'` 的 false 改为 true**
 
 ## 如何刷入
 参考 https://t.me/nanopi_r2s/637 刷入单分区版 GPT BL2 FIP, 再通过 custom U-Boot 刷写 sysupgrade.bin 固件
