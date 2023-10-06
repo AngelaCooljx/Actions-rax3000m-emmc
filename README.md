@@ -1,7 +1,7 @@
 # Actions-rax3000m-emmc-ubootmod
-使用 GitHub Actions 在线编译定制 CMCC RAX3000M EMMC (ubootmod) 版本的 ImmortalWrt-23.05-SNAPSHOT 固件
+使用 GitHub Actions 在线编译定制 CMCC RAX3000M eMMC version (custom U-Boot layout) 的 ImmortalWrt-23.05-SNAPSHOT 固件
 
-**得益于 [@1715173329](https://github.com/1715173329) 的提交 [b587b57](https://github.com/immortalwrt/immortalwrt/commit/b587b57d8f1a33925e473af38bc4c17f80af0417) ，ImmortalWrt 官方现已支持 CMCC RAX3000M EMMC 版本固件编译使用**
+**得益于 [@1715173329](https://github.com/1715173329) 的提交 [b587b57](https://github.com/immortalwrt/immortalwrt/commit/b587b57d8f1a33925e473af38bc4c17f80af0417) ，ImmortalWrt 官方现已支持 CMCC RAX3000M eMMC 版本固件编译使用**
 
 ## 固件特性
 使用 [ImmortalWrt 官方仓库](https://github.com/immortalwrt/immortalwrt/tree/openwrt-23.05)，openwrt-23.05 分支源码编译，无线使用 mt76 开源驱动，主线已支持硬件加速，内核版本 5.15，软件包支持在线安装
@@ -22,7 +22,7 @@
 
 需要取消集成或添加其他软件包可在 `configs/rax3000m-emmc.config` 处参考注释内容自行修改或添加配置
 
-Actions 默认编译 52 MHz 版本，部分机器使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，需要在 Run workflow 时勾选 **Use 26MHz max-frequency** 重新编译刷入使用，或在工作流配置文件中将 `USE_26MHZ` 中 `default: 'false'` 的 false 改为 true
+**Actions 默认编译 52 MHz 版本，部分机器使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，甚至可能无法正常启动，你可以在 [Release](https://github.com/AngelaCooljx/Actions-rax3000m-emmc/releases) 处查找 26 MHz 版本固件。自行构建需要在 Run workflow 时勾选 “Use 26MHz max-frequency” 重新编译刷入使用，或在工作流配置文件中将 `USE_26MHZ` 中 `default: 'false'` 的 false 改为 true**
 
 ## 如何刷入
 参考 https://t.me/nanopi_r2s/637 刷入单分区版 GPT BL2 FIP, 再通过 custom U-Boot 刷写 sysupgrade.bin 固件
@@ -37,13 +37,14 @@ Actions 默认编译 52 MHz 版本，部分机器使用默认 52 MHz 闪存频�
 > ```
 > 对应 ImmortalWrt CMCC RAX3000M eMMC version (custom U-Boot layout)、Q-WRT、及其他 eMMC 单分区版固件。
 
-所有文件可在 https://firmware.download.immortalwrt.eu.org/uboot/mediatek 获取
+路由器进入 uboot 需要手动设置本机 IP `192.168.1.100` 网关 `192.168.1.1` DNS `192.168.1.1`，浏览器输入 `192.168.1.1` 进入 webui 刷写固件，所有文件可在 https://firmware.download.immortalwrt.eu.org/uboot/mediatek 获取
 
 ## 注意事项
 此分区布局默认不创建 eMMC 闪存最后一块 56G 大分区，你需要使用 `cfdisk /dev/mmcblk0` 为最后一块剩余空闲容量手动创建 /dev/mmcblk0p7 分区并通过 mkfs.ext4 格式化以挂载使用，此后更新刷入其他固件则无需再进行相同操作，固件可以自动挂载
 
 ## Credits
 - [XiaoBinin/Actions-immortalwrt](https://github.com/XiaoBinin/Actions-immortalwrt)
+- [ImmortalWrt](https://github.com/immortalwrt/immortalwrt)
 - [hanwckf/immortalwrt-mt798x](https://github.com/hanwckf/immortalwrt-mt798x)
 - [lgs2007m/immortalwrt-mt798x-rax3000m-emmc](https://github.com/lgs2007m/immortalwrt-mt798x-rax3000m-emmc)
 - [GL-iNet](https://github.com/gl-inet)
@@ -51,7 +52,6 @@ Actions 默认编译 52 MHz 版本，部分机器使用默认 52 MHz 闪存频�
 - [Microsoft Azure](https://azure.microsoft.com)
 - [GitHub Actions](https://github.com/features/actions)
 - [OpenWrt](https://github.com/openwrt/openwrt)
-- [ImmortalWrt](https://github.com/immortalwrt/immortalwrt)
 - [tmate](https://github.com/tmate-io/tmate)
 - [mxschmitt/action-tmate](https://github.com/mxschmitt/action-tmate)
 - [csexton/debugger-action](https://github.com/csexton/debugger-action)
