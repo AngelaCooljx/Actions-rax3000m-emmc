@@ -23,7 +23,7 @@ on:
       USE_26MHZ:
         description: 'Use 26MHz max-frequency'
         required: true
-        default: 'false'
+        default: 'true'
         type: boolean
 
 env:
