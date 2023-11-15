@@ -1,5 +1,5 @@
 # Actions-rax3000m-emmc-ubootmod
-使用 GitHub Actions 在线编译定制 CMCC RAX3000M eMMC version (custom U-Boot layout) 的 ImmortalWrt-23.05-SNAPSHOT 固件
+使用 GitHub Actions 在线编译定制 CMCC RAX3000M eMMC version (custom U-Boot layout) 的 ImmortalWrt-23.05.0 固件
 
 **得益于 [@1715173329](https://github.com/1715173329) 的提交 [b587b57](https://github.com/immortalwrt/immortalwrt/commit/b587b57d8f1a33925e473af38bc4c17f80af0417) ，ImmortalWrt 官方现已支持 CMCC RAX3000M eMMC 版本固件编译使用**
 
