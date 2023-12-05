@@ -20,8 +20,8 @@ on:
    # 分,时,日,月,星期。每周五 18 时执行一次 (UTC时间)
   workflow_dispatch:
     inputs:
-      USE_MTWIFI_CFG_LUCI:
-        description: 'Use mtwifi-cfg-luci'
+      USE_MTWIFI_CFG:
+        description: 'Use mtwifi-cfg'
         required: true
         default: true
         type: boolean
@@ -59,7 +59,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        echo "USE_MTWIFI_CFG_LUCI=${{ github.event.inputs.USE_MTWIFI_CFG_LUCI }}" >> $GITHUB_ENV
+        echo "USE_MTWIFI_CFG=${{ github.event.inputs.USE_MTWIFI_CFG }}" >> $GITHUB_ENV
         echo "USE_NX30PRO_EEPROM=${{ github.event.inputs.USE_NX30PRO_EEPROM }}" >> $GITHUB_ENV
         echo "USE_52MHZ=${{ github.event.inputs.USE_52MHZ }}" >> $GITHUB_ENV
         chmod +x $FREE_DISK_SH && $FREE_DISK_SH
@@ -100,9 +100,9 @@ jobs:
         cat configs/rax3000m-emmc_mtksdk.config >> openwrt/.config
 
     - name: 设置无线控制界面样式
-      if: env.USE_MTWIFI_CFG_LUCI == 'true'
+      if: env.USE_MTWIFI_CFG == 'true'
       run: |
-        sed -i '/CONFIG_PACKAGE_luci-app-mtk=y/{N;N;N;s/CONFIG_PACKAGE_luci-app-mtk=y\nCONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y\nCONFIG_PACKAGE_wifi-profile=y\nCONFIG_WIFI_NORMAL_SETTING=y/CONFIG_PACKAGE_lua-cjson=y\nCONFIG_PACKAGE_mtwifi-cfg=y\nCONFIG_PACKAGE_mtwifi-cfg-luci=y/}' openwrt/.config
+        sed -i '/CONFIG_PACKAGE_luci-app-mtk=y/{N;N;N;s/CONFIG_PACKAGE_luci-app-mtk=y\nCONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y\nCONFIG_PACKAGE_wifi-profile=y\nCONFIG_WIFI_NORMAL_SETTING=y/CONFIG_PACKAGE_lua-cjson=y\nCONFIG_PACKAGE_luci-app-mtwifi-cfg=y\nCONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y\nCONFIG_PACKAGE_mtwifi-cfg=y/}' openwrt/.config
 
     - name: 设置是否使用 nx30pro eeprom
       if: env.USE_NX30PRO_EEPROM == 'true'
