@@ -8,7 +8,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
-name: Build ImmortalWrt
+name: Build ImmortalWrt-mt798x
 
 permissions: write-all
 # 开启写权限，防止无法上传到release
@@ -16,10 +16,20 @@ permissions: write-all
 on:
   repository_dispatch:
   schedule:
-   - cron: 0 19 * * 5
-   # 分,时,日,月,星期。每周五 19 时执行一次 (UTC时间)
+   - cron: 0 18 * * 5
+   # 分,时,日,月,星期。每周五 18 时执行一次 (UTC时间)
   workflow_dispatch:
     inputs:
+      USE_MTWIFI_CFG_LUCI:
+        description: 'Use mtwifi-cfg-luci'
+        required: true
+        default: true
+        type: boolean
+      USE_NX30PRO_EEPROM:
+        description: 'Use nx30pro eeprom'
+        required: true
+        default: true
+        type: boolean
       USE_52MHZ:
         description: 'Use 52MHz max-frequency'
         required: true
@@ -27,8 +37,7 @@ on:
         type: boolean
 
 env:
-  REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: v23.05.1
+  REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
   FREE_DISK_SH: scripts/free_disk_space.sh
   ENV_SH: scripts/environment.sh
   DIY_SH: scripts/diy.sh
@@ -50,6 +59,8 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        echo "USE_MTWIFI_CFG_LUCI=${{ github.event.inputs.USE_MTWIFI_CFG_LUCI }}" >> $GITHUB_ENV
+        echo "USE_NX30PRO_EEPROM=${{ github.event.inputs.USE_NX30PRO_EEPROM }}" >> $GITHUB_ENV
         echo "USE_52MHZ=${{ github.event.inputs.USE_52MHZ }}" >> $GITHUB_ENV
         chmod +x $FREE_DISK_SH && $FREE_DISK_SH
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
@@ -67,14 +78,14 @@ jobs:
     - name: 克隆源码
       working-directory: /workdir
       run: |
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        git clone $REPO_URL openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: 开启缓存
       uses: klever1988/cachewrtbuild@main
       with:
         ccache: 'true'
-        mixkey: 'openwrt23-cortexa53'
+        mixkey: 'openwrt21-cortexa53'
         prefix: ${{ github.workspace }}/openwrt
 
     - name: 更新 & 安装 feeds & 执行脚本
@@ -83,27 +94,39 @@ jobs:
         ./scripts/feeds update -a && ./scripts/feeds install -a        
         chmod +x $GITHUB_WORKSPACE/$DIY_SH && $GITHUB_WORKSPACE/$DIY_SH
 
-    - name: 导入补丁和配置 & 下载文件
+    - name: 导入补丁和配置
       run: |
         [ -e files ] && mv files openwrt/files
-        cat configs/rax3000m-emmc.config >> openwrt/.config
+        cat configs/rax3000m-emmc_mtksdk.config >> openwrt/.config
+
+    - name: 设置无线控制界面样式
+      if: env.USE_MTWIFI_CFG_LUCI == 'true'
+      run: |
+        sed -i '/CONFIG_PACKAGE_luci-app-mtk=y/{N;N;N;s/CONFIG_PACKAGE_luci-app-mtk=y\nCONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y\nCONFIG_PACKAGE_wifi-profile=y\nCONFIG_WIFI_NORMAL_SETTING=y/CONFIG_PACKAGE_lua-cjson=y\nCONFIG_PACKAGE_mtwifi-cfg=y\nCONFIG_PACKAGE_mtwifi-cfg-luci=y/}' openwrt/.config
+
+    - name: 设置是否使用 nx30pro eeprom
+      if: env.USE_NX30PRO_EEPROM == 'true'
+      run: |
+        mkdir openwrt/target/linux/mediatek/mt7981/base-files/lib/firmware
+        cp bin/nx30pro_eeprom.bin openwrt/target/linux/mediatek/mt7981/base-files/lib/firmware/MT7981_iPAiLNA_EEPROM.bin
+        sed -i 's/caldata_extract_mmc/# caldata_extract_mmc/' openwrt/target/linux/mediatek/mt7981/base-files/lib/preinit/90_extract_caldata
+        sed -i 's#./files/mt7981-default-eeprom/MT7981_iPAiLNA_EEPROM.bin##' openwrt/package/mtk/drivers/mt_wifi/Makefile
+
+    - name: 设置 dts 闪存频率
+      if: env.USE_52MHZ == 'true'
+      run: |
+        sed -i 's/26000000/52000000/g' openwrt/target/linux/mediatek/files-5.4/arch/arm64/boot/dts/mediatek/mt7981-cmcc-rax3000m-emmc.dts
+        grep max-frequency openwrt/target/linux/mediatek/files-5.4/arch/arm64/boot/dts/mediatek/mt7981-cmcc-rax3000m-emmc.dts
+
+    - name: 下载文件 & 编译固件中
+      id: compile
+      run: |
         cd openwrt
         chmod +x $GITHUB_WORKSPACE/$CLASH_CORE && $GITHUB_WORKSPACE/$CLASH_CORE
         make defconfig
         make download -j8 V=10
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-
-    - name: 设置 dts 闪存频率
-      if: env.USE_52MHZ == 'true'
-      run: |
-        sed -i 's/26000000/52000000/g' openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts
-        grep max-frequency openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts
-
-    - name: 编译固件中
-      id: compile
-      run: |
-        cd openwrt
         echo -e "$(($(nproc)+1)) thread compile"
         make -j$(($(nproc)+1)) || make -j$(nproc) || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
@@ -142,10 +165,20 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && steps.compile.outputs.status == 'success' && !cancelled()
       run: |
-        echo -e "### immortalwrt-23.05.1-rax3000m-emmc-ubootmod" >> release.txt
-        max_frequency=$(($(grep -oP "max-frequency = <\K[0-9]*" openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts) / 1000000))
+        echo -e "### immortalwrt-mt7981-cmcc_rax3000m-emmc" >> release.txt
+        if grep -q 'CONFIG_PACKAGE_mtwifi-cfg=y' openwrt/.config; then
+          echo "- 使用 OpenWrt 原生无线控制界面" >> release.txt
+        else
+          echo "- 使用 MTK SDK 无线控制界面" >> release.txt
+        fi
+        if [ -e openwrt/target/linux/mediatek/mt7981/base-files/lib/firmware/MT7981_iPAiLNA_EEPROM.bin ] ; then
+          echo "- eeprom 使用 H3C NX30 Pro 提取版本" >> release.txt
+        else
+          echo "- eeprom 未修改" >> release.txt
+        fi
+        max_frequency=$(($(grep -oP "max-frequency = <\K[0-9]*" openwrt/target/linux/mediatek/files-5.4/arch/arm64/boot/dts/mediatek/mt7981-cmcc-rax3000m-emmc.dts) / 1000000))
         echo "- 使用闪存频率: ${max_frequency}MHz" >> release.txt
-        echo "release_tag=$(date +"%Y.%m.%d-23.05.1-rax3000m-emmc-ubootmod-${max_frequency}MHz")" >> $GITHUB_OUTPUT
+        echo "release_tag=$(date +"%Y.%m.%d-mt7981-cmcc_rax3000m-emmc-${max_frequency}MHz")" >> $GITHUB_OUTPUT
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传固件发布
