@@ -170,19 +170,26 @@ jobs:
       if: env.UPLOAD_RELEASE == 'true' && steps.compile.outputs.status == 'success' && !cancelled()
       run: |
         echo -e "### immortalwrt-mt7981-cmcc_rax3000m-emmc" >> release.txt
+        wlan_luci_interface=""
         if grep -q 'CONFIG_PACKAGE_mtwifi-cfg=y' openwrt/.config; then
           echo "- 使用 OpenWrt 原生无线控制界面" >> release.txt
+          wlan_luci_interface="mtwifi-cfg"
         else
           echo "- 使用 MTK SDK 无线控制界面" >> release.txt
+          wlan_luci_interface="luci-app-mtk"
         fi
+        eeprom_status=""
         if [ -e openwrt/target/linux/mediatek/mt7981/base-files/lib/firmware/MT7981_iPAiLNA_EEPROM.bin ] ; then
           echo "- eeprom 使用 H3C NX30 Pro 提取版本" >> release.txt
+          eeprom_status="nx30pro_eeprom"
         else
           echo "- eeprom 未修改" >> release.txt
+          eeprom_status="default_eeprom"
         fi
         max_frequency=$(($(grep -oP "max-frequency = <\K[0-9]*" openwrt/target/linux/mediatek/files-5.4/arch/arm64/boot/dts/mediatek/mt7981-cmcc-rax3000m-emmc.dts) / 1000000))
         echo "- 使用闪存频率: ${max_frequency}MHz" >> release.txt
-        echo "release_tag=$(date +"%Y.%m.%d-mt7981-cmcc_rax3000m-emmc-${max_frequency}MHz")" >> $GITHUB_OUTPUT
+        release_tag=$(date +"%Y.%m.%d-mt7981-cmcc_rax3000m-emmc-${wlan_luci_interface}-${eeprom_status}-${max_frequency}MHz")
+        echo "release_tag=${release_tag}" >> $GITHUB_OUTPUT
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传固件发布
