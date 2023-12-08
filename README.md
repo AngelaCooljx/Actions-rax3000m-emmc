@@ -20,11 +20,12 @@
 ## 使用说明
 每周五 19 时自动执行或在 Actions 选择该工作流手动点击 Run workflow 执行编译，等待固件编译完成上传至 releases 发布即可下载
 
-默认 LAN IP 已更改为 `192.168.6.1`，可在 `scripts/diy.sh` 处修改
+### 配置说明
+- 默认 LAN IP 已更改为 `192.168.6.1`，可在 `scripts/diy.sh` 处修改
 
-需要取消集成或添加其他软件包可在 `configs/rax3000m-emmc.config` 处参考注释内容自行修改或添加配置
+- 需要取消集成或添加其他软件包可在 `configs/rax3000m-emmc.config` 处参考注释内容自行修改或添加配置
 
-默认编译 52 MHz 版本，**部分机器因闪存体质差异，使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，甚至可能无法启动**，你可以在 [Releases](https://github.com/AngelaCooljx/Actions-rax3000m-emmc/releases) 处查找 26 MHz 版本固件。自行构建需要在 Run workflow 时取消勾选 “Use 52MHz max-frequency”， 或在 workflow 配置文件中将 `USE_52MHZ` 中 `default: true` 的 true 改为 false，重新编译刷入使用
+- 默认编译 52 MHz 版本，**部分机器因闪存体质差异，使用默认 52 MHz 闪存频率固件可能会出现 I/O 报错，无法正常使用，甚至可能无法启动**，你可以在 [Releases](https://github.com/AngelaCooljx/Actions-rax3000m-emmc/releases) 处查找 26 MHz 版本固件。自行构建需要在 Run workflow 时取消勾选 “Use 52MHz max-frequency”， 或在 workflow 配置文件中将 `USE_52MHZ` 中 `default: true` 的 true 改为 false，重新编译刷入使用
 
 ## 如何刷入
 参考 https://t.me/nanopi_r2s/637 刷入单分区版 GPT BL2 FIP, 再通过 custom U-Boot 刷写 sysupgrade.bin 固件
