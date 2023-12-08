@@ -1,0 +1,25 @@
+From 9f1e75c28b092ed3fb94ba9b9b0716f4713d7ec7 Mon Sep 17 00:00:00 2001
+From: padavanonly <83120842+padavanonly@users.noreply.github.com>
+Date: Fri, 8 Dec 2023 21:00:02 +0800
+Subject: [PATCH 5/5] Mediatek:enable ppe update nf stat by default
+
+---
+ .../files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c     | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+index 236c261c5c..522c96777b 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+@@ -755,7 +755,7 @@ static int hnat_probe(struct platform_device *pdev)
+ #else
+ 	hnat_priv->ppe_base[0] = hnat_priv->fe_base + 0xe00;
+ #endif
+-
++	hnat_priv->nf_stat_en = true; /* enable ppe update nf stat by default */
+ 	hnat_priv->ipv6_en = true; /* enable ipv6 by default */
+ 	hnat_priv->guest_en = true; /* enable guest wifi by default */
+ 
+-- 
+2.43.0
+

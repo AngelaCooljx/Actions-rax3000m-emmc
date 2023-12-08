@@ -1,0 +1,613 @@
+From 639a7681e4154da6f38c9a9f4ce9029ca8277c03 Mon Sep 17 00:00:00 2001
+From: padavanonly <padavanonly@github.com>
+Date: Thu, 7 Dec 2023 15:38:34 +0800
+Subject: [PATCH 3/5] add luci-eqos-mtk(fork from tianling's version)
+
+---
+ defconfig/mt7981-ax3000-mtwifi-cfg.config     |  1 +
+ defconfig/mt7981-ax3000.config                |  1 +
+ defconfig/mt7986-ax4200.config                |  1 +
+ defconfig/mt7986-ax6000-256m.config           |  1 +
+ defconfig/mt7986-ax6000-mtwifi-cfg.config     |  1 +
+ defconfig/mt7986-ax6000.config                |  1 +
+ .../applications/luci-app-eqos-mtk/Makefile   | 11 +++
+ .../htdocs/luci-static/resources/view/eqos.js | 67 +++++++++++++++++
+ .../luci-app-eqos-mtk/po/templates/eqos.pot   | 50 +++++++++++++
+ .../luci-app-eqos-mtk/po/zh_Hans/eqos.po      | 58 +++++++++++++++
+ .../luci-app-eqos-mtk/root/etc/config/eqos    | 12 ++++
+ .../root/etc/hotplug.d/iface/10-eqos          |  5 ++
+ .../luci-app-eqos-mtk/root/etc/init.d/eqos    | 49 +++++++++++++
+ .../root/etc/uci-defaults/luci-eqos           |  9 +++
+ .../luci-app-eqos-mtk/root/usr/sbin/eqos      | 72 +++++++++++++++++++
+ .../usr/share/luci/menu.d/luci-app-eqos.json  | 13 ++++
+ .../usr/share/rpcd/acl.d/luci-app-eqos.json   | 11 +++
+ .../net/ethernet/mediatek/mtk_hnat/hnat.c     | 12 ++--
+ .../net/ethernet/mediatek/mtk_hnat/hnat.h     |  6 +-
+ .../ethernet/mediatek/mtk_hnat/hnat_nf_hook.c |  5 +-
+ 20 files changed, 379 insertions(+), 7 deletions(-)
+ create mode 100644 package/mtk/applications/luci-app-eqos-mtk/Makefile
+ create mode 100644 package/mtk/applications/luci-app-eqos-mtk/htdocs/luci-static/resources/view/eqos.js
+ create mode 100644 package/mtk/applications/luci-app-eqos-mtk/po/templates/eqos.pot
+ create mode 100644 package/mtk/applications/luci-app-eqos-mtk/po/zh_Hans/eqos.po
+ create mode 100644 package/mtk/applications/luci-app-eqos-mtk/root/etc/config/eqos
+ create mode 100755 package/mtk/applications/luci-app-eqos-mtk/root/etc/hotplug.d/iface/10-eqos
+ create mode 100755 package/mtk/applications/luci-app-eqos-mtk/root/etc/init.d/eqos
+ create mode 100755 package/mtk/applications/luci-app-eqos-mtk/root/etc/uci-defaults/luci-eqos
+ create mode 100755 package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
+ create mode 100644 package/mtk/applications/luci-app-eqos-mtk/root/usr/share/luci/menu.d/luci-app-eqos.json
+ create mode 100644 package/mtk/applications/luci-app-eqos-mtk/root/usr/share/rpcd/acl.d/luci-app-eqos.json
+
+diff --git a/defconfig/mt7981-ax3000-mtwifi-cfg.config b/defconfig/mt7981-ax3000-mtwifi-cfg.config
+index e09c3d0aab..167a339efe 100644
+--- a/defconfig/mt7981-ax3000-mtwifi-cfg.config
++++ b/defconfig/mt7981-ax3000-mtwifi-cfg.config
+@@ -272,6 +272,7 @@ CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Server=y
+ # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Rust_Server is not set
+ # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Simple_Obfs is not set
+ # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Xray is not set
++CONFIG_PACKAGE_luci-app-eqos-mtk=y
+ CONFIG_PACKAGE_luci-app-turboacc-mtk=y
+ CONFIG_PACKAGE_luci-app-upnp=y
+ # CONFIG_PACKAGE_luci-app-vssr_INCLUDE_ShadowsocksR_Libev_Server is not set
+diff --git a/defconfig/mt7981-ax3000.config b/defconfig/mt7981-ax3000.config
+index 36f9d32b8f..3eb3d1e980 100644
+--- a/defconfig/mt7981-ax3000.config
++++ b/defconfig/mt7981-ax3000.config
+@@ -250,6 +250,7 @@ CONFIG_PACKAGE_libstdcpp=y
+ CONFIG_PACKAGE_libudev-zero=y
+ CONFIG_PACKAGE_libuuid=y
+ CONFIG_PACKAGE_luci-app-mtk=y
++CONFIG_PACKAGE_luci-app-eqos-mtk=y
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy is not set
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client is not set
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Libev_Client is not set
+diff --git a/defconfig/mt7986-ax4200.config b/defconfig/mt7986-ax4200.config
+index ed6a5ed478..24da6f9762 100644
+--- a/defconfig/mt7986-ax4200.config
++++ b/defconfig/mt7986-ax4200.config
+@@ -221,6 +221,7 @@ CONFIG_PACKAGE_libpcap=y
+ CONFIG_PACKAGE_libstdcpp=y
+ CONFIG_PACKAGE_libudev-zero=y
+ CONFIG_PACKAGE_libuuid=y
++CONFIG_PACKAGE_luci-app-eqos-mtk=y
+ CONFIG_PACKAGE_luci-app-mtk=y
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy is not set
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client is not set
+diff --git a/defconfig/mt7986-ax6000-256m.config b/defconfig/mt7986-ax6000-256m.config
+index b70c28199e..16c81b2971 100644
+--- a/defconfig/mt7986-ax6000-256m.config
++++ b/defconfig/mt7986-ax6000-256m.config
+@@ -219,6 +219,7 @@ CONFIG_PACKAGE_libpcap=y
+ CONFIG_PACKAGE_libstdcpp=y
+ CONFIG_PACKAGE_libudev-zero=y
+ CONFIG_PACKAGE_libuuid=y
++CONFIG_PACKAGE_luci-app-eqos-mtk=y
+ CONFIG_PACKAGE_luci-app-mtk=y
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy is not set
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client is not set
+diff --git a/defconfig/mt7986-ax6000-mtwifi-cfg.config b/defconfig/mt7986-ax6000-mtwifi-cfg.config
+index 871c036e32..0e1371192c 100644
+--- a/defconfig/mt7986-ax6000-mtwifi-cfg.config
++++ b/defconfig/mt7986-ax6000-mtwifi-cfg.config
+@@ -249,6 +249,7 @@ CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Server=y
+ # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Rust_Server is not set
+ # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Simple_Obfs is not set
+ # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Xray is not set
++CONFIG_PACKAGE_luci-app-eqos-mtk=y
+ CONFIG_PACKAGE_luci-app-turboacc-mtk=y
+ CONFIG_PACKAGE_luci-app-upnp=y
+ # CONFIG_PACKAGE_luci-app-vssr_INCLUDE_ShadowsocksR_Libev_Server is not set
+diff --git a/defconfig/mt7986-ax6000.config b/defconfig/mt7986-ax6000.config
+index ecc28e350d..9bf17307fc 100644
+--- a/defconfig/mt7986-ax6000.config
++++ b/defconfig/mt7986-ax6000.config
+@@ -226,6 +226,7 @@ CONFIG_PACKAGE_libpcap=y
+ CONFIG_PACKAGE_libstdcpp=y
+ CONFIG_PACKAGE_libudev-zero=y
+ CONFIG_PACKAGE_libuuid=y
++CONFIG_PACKAGE_luci-app-eqos-mtk=y
+ CONFIG_PACKAGE_luci-app-mtk=y
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy is not set
+ # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client is not set
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/Makefile b/package/mtk/applications/luci-app-eqos-mtk/Makefile
+new file mode 100644
+index 0000000000..8b0d3f1068
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/Makefile
+@@ -0,0 +1,11 @@
++include $(TOPDIR)/rules.mk
++
++LUCI_TITLE:=LuCI support for Easy QoS
++LUCI_DEPENDS:=+tc +kmod-sched-core +kmod-ifb @!PACKAGE_luci-app-eqos
++
++PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
++PKG_NAME:=luci-app-eqos-mtk
++
++include $(TOPDIR)/feeds/luci/luci.mk
++
++# call BuildPackage - OpenWrt buildroot signature
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/htdocs/luci-static/resources/view/eqos.js b/package/mtk/applications/luci-app-eqos-mtk/htdocs/luci-static/resources/view/eqos.js
+new file mode 100644
+index 0000000000..195d399a9f
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/htdocs/luci-static/resources/view/eqos.js
+@@ -0,0 +1,67 @@
++'use strict';
++'require form';
++'require network';
++'require uci';
++'require view';
++
++return view.extend({
++	load: function() {
++		return Promise.all([
++			uci.load('eqos'),
++			network.getHostHints()
++		]);
++	},
++
++	render: function(data) {
++		var m, s, o;
++
++		m = new form.Map('eqos', _('EQoS'),
++ 			_('Network speed control service.(Compatiable with Mediatek HNAT)'));
++ 			
++		s = m.section(form.NamedSection, 'config', 'eqos');
++
++		o = s.option(form.Flag, 'enabled', _('Enable'));
++		o.default = o.disabled;
++		o.rmempty = false;
++
++		o = s.option(form.Value, 'download', _('Download speed (Mbit/s)'),
++			_('Total download bandwidth.'));
++		o.datatype = 'and(uinteger,min(1))';
++		o.rmempty = false;
++
++		o = s.option(form.Value, 'upload', _('Upload speed (Mbit/s)'),
++			_('Total upload bandwidth.'));
++		o.datatype = 'and(uinteger,min(1))';
++		o.rmempty = false;
++
++		s = m.section(form.TableSection, 'device', _('Speed limit based on IP address'));
++		s.addremove = true;
++		s.anonymous = true;
++		s.sortable = true;
++
++		o = s.option(form.Flag, 'enabled', _('Enable'));
++		o.default = o.enabled;
++
++		o = s.option(form.Value, 'ip', _('IP address'));
++		o.datatype = 'ip4addr';
++		for (var i of Object.entries(data[1]?.hosts))
++			for (var v in i[1].ipaddrs)
++				if (i[1].ipaddrs[v]) {
++					var ip_addr = i[1].ipaddrs[v], ip_host = i[1].name;
++					o.value(ip_addr, ip_host ? String.format('%s (%s)', ip_host, ip_addr) : ip_addr)
++				}
++		o.rmempty = false;
++
++		o = s.option(form.Value, 'download', _('Download speed (Mbit/s)'));
++		o.datatype = 'and(uinteger,min(0))';
++		o.rmempty = false;
++
++		o = s.option(form.Value, 'upload', _('Upload speed (Mbit/s)'));
++		o.datatype = 'and(uinteger,min(0))';
++		o.rmempty = false;
++
++		o = s.option(form.Value, 'comment', _('Comment'));
++
++		return m.render();
++	}
++});
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/po/templates/eqos.pot b/package/mtk/applications/luci-app-eqos-mtk/po/templates/eqos.pot
+new file mode 100644
+index 0000000000..b90005646b
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/po/templates/eqos.pot
+@@ -0,0 +1,50 @@
++msgid ""
++msgstr "Content-Type: text/plain; charset=UTF-8"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:64
++msgid "Comment"
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:28
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:56
++msgid "Download speed (Mbit/s)"
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:18
++#: applications/luci-app-eqos/root/usr/share/luci/menu.d/luci-app-eqos.json:3
++msgid "EQoS"
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:24
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:43
++msgid "Enable"
++msgstr ""
++
++#: applications/luci-app-eqos/root/usr/share/rpcd/acl.d/luci-app-eqos.json:3
++msgid "Grant UCI access for luci-app-eqos"
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:46
++msgid "IP address"
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:19
++msgid "Network speed control service."
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:38
++msgid "Speed limit based on IP address"
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:29
++msgid "Total download bandwidth."
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:34
++msgid "Total upload bandwidth."
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:33
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:60
++msgid "Upload speed (Mbit/s)"
++msgstr ""
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/po/zh_Hans/eqos.po b/package/mtk/applications/luci-app-eqos-mtk/po/zh_Hans/eqos.po
+new file mode 100644
+index 0000000000..ff511eb25d
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/po/zh_Hans/eqos.po
+@@ -0,0 +1,58 @@
++msgid ""
++msgstr ""
++"Project-Id-Version: LuCi Chinese Translation\n"
++"Report-Msgid-Bugs-To: \n"
++"Language: zh_Hans\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=UTF-8\n"
++"Content-Transfer-Encoding: 8bit\n"
++"Plural-Forms: nplurals=1; plural=0;\n"
++"X-Generator: Pootle 2.0.6\n"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:64
++msgid "Comment"
++msgstr "注释"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:28
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:56
++msgid "Download speed (Mbit/s)"
++msgstr "下载速度 (Mbit/s)"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:18
++#: applications/luci-app-eqos/root/usr/share/luci/menu.d/luci-app-eqos.json:3
++msgid "EQoS"
++msgstr "网速控制"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:24
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:43
++msgid "Enable"
++msgstr "启用"
++
++#: applications/luci-app-eqos/root/usr/share/rpcd/acl.d/luci-app-eqos.json:3
++msgid "Grant UCI access for luci-app-eqos"
++msgstr "授予 luci-app-eqos 访问 UCI 配置的权限"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:46
++msgid "IP address"
++msgstr "IP 地址"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:19
++msgid "Network speed control service.(Compatiable with Mediatek HNAT)"
++msgstr "网速控制服务(未设置限速主机可正常使用硬件加速)。"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:38
++msgid "Speed limit based on IP address"
++msgstr "基于 IP 限速(设置为0则上行或下载取消限速并启用硬件加速)"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:29
++msgid "Total download bandwidth."
++msgstr "总下载带宽。"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:34
++msgid "Total upload bandwidth."
++msgstr "总上传带宽。"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:33
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:60
++msgid "Upload speed (Mbit/s)"
++msgstr "上传速度 (Mbit/s)"
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/etc/config/eqos b/package/mtk/applications/luci-app-eqos-mtk/root/etc/config/eqos
+new file mode 100644
+index 0000000000..39a1772829
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/etc/config/eqos
+@@ -0,0 +1,12 @@
++# The bandwidth unit is Mbit/s
++config eqos 'config'
++	option enabled      0
++	option download     100
++	option upload       20
++
++# Limiting the bandwidth of a single Device
++#config device
++#	option ip       "192.168.1.100"
++#	option download 10
++#	option upload   5
++#	option comment  "test"
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/etc/hotplug.d/iface/10-eqos b/package/mtk/applications/luci-app-eqos-mtk/root/etc/hotplug.d/iface/10-eqos
+new file mode 100755
+index 0000000000..d70034acbc
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/etc/hotplug.d/iface/10-eqos
+@@ -0,0 +1,5 @@
++#!/bin/sh
++[ "$ACTION" = "ifup" ] || exit 0
++[ "$INTERFACE" = "lan" ] || exit 0
++
++/etc/init.d/eqos start
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/etc/init.d/eqos b/package/mtk/applications/luci-app-eqos-mtk/root/etc/init.d/eqos
+new file mode 100755
+index 0000000000..22fea7a5ff
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/etc/init.d/eqos
+@@ -0,0 +1,49 @@
++#!/bin/sh /etc/rc.common
++# Copyright (C) 2006 OpenWrt.org
++
++START=50
++USE_PROCD=1
++
++parse_device() {
++	local cfg="$1"
++
++	local enabled
++	config_get_bool enabled "$cfg" "enabled" "1"
++	[ "$enabled" -eq "1" ] || return 1
++
++	local ip download upload
++	config_get ip "$cfg" ip
++	config_get download "$cfg" "download"
++	config_get upload "$cfg" "upload"
++
++	eqos add "$ip" "$download" "$upload"
++}
++
++start_service() {
++	config_load "eqos"
++
++	local enabled
++	config_get_bool enabled "config" "enabled" "0"
++	[ "$enabled" -eq "1" ] || return 1
++
++	local download upload
++	config_get download "config" "download"
++	config_get upload "config" "upload"
++
++	eqos start "$download" "$upload"
++
++	config_foreach parse_device "device"
++}
++
++stop_service() {
++	eqos stop
++}
++
++reload_service() {
++	stop
++	start
++}
++
++service_triggers() {
++	procd_add_reload_trigger "eqos"
++}
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/etc/uci-defaults/luci-eqos b/package/mtk/applications/luci-app-eqos-mtk/root/etc/uci-defaults/luci-eqos
+new file mode 100755
+index 0000000000..795b7ac37e
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/etc/uci-defaults/luci-eqos
+@@ -0,0 +1,9 @@
++#!/bin/sh
++
++uci -q batch <<-EOF >/dev/null
++	delete ucitrack.@eqos[-1]
++	add ucitrack eqos
++EOF
++
++rm -f /tmp/luci-indexcache
++exit 0
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos b/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
+new file mode 100755
+index 0000000000..8c24fdba9e
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
+@@ -0,0 +1,72 @@
++#!/bin/sh
++
++dev=br-lan
++
++stop_qos() {
++	tc qdisc del dev $dev root 2>/dev/null
++	tc qdisc del dev $dev ingress 2>/dev/null
++	tc qdisc del dev ${dev}-ifb root 2>/dev/null
++	ip link del dev ${dev}-ifb 2>/dev/null
++}
++
++start_qos() {
++	local dl=$1
++	local up=$2
++	
++	tc qdisc add dev $dev root handle 1: htb
++	tc class add dev $dev parent 1: classid 1:1 htb rate ${dl}mbit
++	
++	ip link add dev ${dev}-ifb name ${dev}-ifb type ifb
++	ip link set dev ${dev}-ifb up
++	
++	tc qdisc add dev ${dev}-ifb root handle 1: htb
++	tc class add dev ${dev}-ifb parent 1: classid 1:1 htb rate ${up}mbit
++	
++	tc qdisc add dev $dev ingress
++	tc filter add dev $dev parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ${dev}-ifb
++}
++
++case "$1" in
++	"stop")
++		stop_qos
++		iptables -t mangle -D FORWARD  -j eqos
++	;;
++	"start")
++		stop_qos
++		iptables -t mangle -F eqos
++		start_qos $2 $3
++		iptables -t mangle -N eqos
++		iptables -t mangle -D FORWARD  -j eqos
++		iptables -t mangle -A FORWARD  -j eqos
++	;;
++	"add")
++		ip="$2"
++		dl="$3"
++		up="$4"
++		
++		cnt=$(tc class show dev $dev | wc -l)
++		iptables -t mangle -D eqos -s $ip -j MARK --set-mark 0x99
++		iptables -t mangle -D eqos -d $ip -j MARK --set-mark 0x99
++		if [ $up -ne 0 ]; then
++		iptables -t mangle -A eqos -s $ip -j MARK --set-mark 0x99
++		fi
++		if [ $dl -ne 0 ]; then
++		iptables -t mangle -A eqos -d $ip -j MARK --set-mark 0x99
++		fi
++		tc class add dev $dev parent 1:1 classid 1:1$cnt htb rate ${dl}mbit ceil ${dl}mbit
++		tc filter add dev $dev parent 1:0 protocol ip u32 match ip dst $ip flowid 1:1$cnt
++		
++		tc class add dev ${dev}-ifb parent 1:1 classid 1:1$cnt htb rate ${up}mbit ceil ${up}mbit
++		tc filter add dev ${dev}-ifb parent 1:0 protocol ip u32 match ip src $ip flowid 1:1$cnt
++	;;
++	*)
++		echo "Usage: $0 <command> [options]"
++		echo "Commands:"
++		echo "  start dl_rate up_rate       #Total bandwidth (Mbit/s)"
++		echo "  stop"
++		echo "  add ip dl_rate up_rate      #Limiting the bandwidth of a single IP (Mbit/s)"
++		echo "Example:"
++		echo "  $0 start 30 20              # Total bandwidth: down 30Mbit/s up 20Mbit/s"
++		echo "  $0 add 192.168.22.12 10 2   # down 10Mbit/s  up 2Mbit/s"
++	;;
++esac
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/usr/share/luci/menu.d/luci-app-eqos.json b/package/mtk/applications/luci-app-eqos-mtk/root/usr/share/luci/menu.d/luci-app-eqos.json
+new file mode 100644
+index 0000000000..1c0994b787
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/usr/share/luci/menu.d/luci-app-eqos.json
+@@ -0,0 +1,13 @@
++{
++	"admin/services/eqos": {
++		"title": "EQoS",
++		"action": {
++			"type": "view",
++			"path": "eqos"
++		},
++		"depends": {
++			"acl": [ "luci-app-eqos" ],
++			"uci": { "eqos": true }
++		}
++	}
++}
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/usr/share/rpcd/acl.d/luci-app-eqos.json b/package/mtk/applications/luci-app-eqos-mtk/root/usr/share/rpcd/acl.d/luci-app-eqos.json
+new file mode 100644
+index 0000000000..6870274434
+--- /dev/null
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/usr/share/rpcd/acl.d/luci-app-eqos.json
+@@ -0,0 +1,11 @@
++{
++	"luci-app-eqos": {
++		"description": "Grant UCI access for luci-app-eqos",
++		"read": {
++			"uci": [ "eqos" ]
++		},
++		"write": {
++			"uci": [ "eqos" ]
++		}
++	}
++}
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+index 232ae91f61..236c261c5c 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+@@ -143,16 +143,20 @@ void set_gmac_ppe_fwd(int id, int enable)
+ 
+ 	if (enable) {
+ 		if (id == 0)
+-			cr_set_bits(reg, BITS_GDM_ALL_FRC_P_PPE);
+-		else
+-			cr_set_bits(reg, BITS_GDM_ALL_FRC_P_PPE1);
++ 			cr_set_bits(reg, BITS_GDM_ALL_FRC_P_PPE);
++ 		else {
++ 			if(CFG_PPE_NUM>1)
++ 				cr_set_bits(reg, BITS_GDM_ALL_FRC_P_PPE1);
++ 			else
++ 				cr_set_bits(reg, BITS_GDM_ALL_FRC_P_PPE);
++			} 
+ 		return;
+ 	}
+ 
+ 	/*disabled */
+ 	val = readl(reg);
+ 	if (((val & GDM_ALL_FRC_MASK) == BITS_GDM_ALL_FRC_P_PPE ||
+-	     (val & GDM_ALL_FRC_MASK) == BITS_GDM_ALL_FRC_P_PPE1))
++ 	     (val & GDM_ALL_FRC_MASK) == BITS_GDM_ALL_FRC_P_PPE1))
+ 		cr_set_field(reg, GDM_ALL_FRC_MASK,
+ 			     BITS_GDM_ALL_FRC_P_CPU_PDMA);
+ }
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h
+index 8cdbdea91c..8275a9f890 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h
+@@ -611,6 +611,7 @@ struct foe_entry {
+ #define MAX_PPE_NUM		1
+ #endif
+ #define CFG_PPE_NUM		(hnat_priv->ppe_num)
++#define HNAT_EXCEPTION_TAG	0x99
+ 
+ struct mib_entry {
+ 	u32 byt_cnt_l;
+@@ -770,8 +771,9 @@ enum FoeIpAct {
+ #define BITS_GDM_MFRC_P_PPE1 (NR_PPE1_PORT << 4)
+ #define BITS_GDM_OFRC_P_PPE1 (NR_PPE1_PORT << 0)
+ #define BITS_GDM_ALL_FRC_P_PPE1					\
+-	(BITS_GDM_UFRC_P_PPE1 | BITS_GDM_BFRC_P_PPE1 |		\
+-	 BITS_GDM_MFRC_P_PPE1 | BITS_GDM_OFRC_P_PPE1)
++ 	(BITS_GDM_UFRC_P_PPE1 | BITS_GDM_BFRC_P_PPE1 |		\
++ 	 BITS_GDM_MFRC_P_PPE1 | BITS_GDM_OFRC_P_PPE1)
++
+ 
+ #define BITS_GDM_UFRC_P_CPU_PDMA (NR_PDMA_PORT << 12)
+ #define BITS_GDM_BFRC_P_CPU_PDMA (NR_PDMA_PORT << 8)
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c
+index de391ca9f2..905fea31aa 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c
+@@ -1742,7 +1742,7 @@ int mtk_sw_nat_hook_tx(struct sk_buff *skb, int gmac_no)
+ 
+ 	if (!skb_hnat_is_hashed(skb))
+ 		return NF_ACCEPT;
+-
++	
+ 	if (skb_hnat_entry(skb) >= hnat_priv->foe_etry_num ||
+ 	    skb_hnat_ppe(skb) >= CFG_PPE_NUM)
+ 		return NF_ACCEPT;
+@@ -2081,6 +2081,9 @@ static unsigned int mtk_hnat_nf_post_routing(
+ 
+ 	if (unlikely(!skb_hnat_is_hashed(skb)))
+ 		return 0;
++		
++	if (unlikely(skb->mark == HNAT_EXCEPTION_TAG))
++		return 0;
+ 
+ 	if (out->netdev_ops->ndo_flow_offload_check) {
+ 		out->netdev_ops->ndo_flow_offload_check(&hw_path);
+-- 
+2.43.0
+

@@ -1,0 +1,278 @@
+From d4190573187034f8e6ce4640a01ca209c81b5a63 Mon Sep 17 00:00:00 2001
+From: padavanonly <padavanonly@github.com>
+Date: Fri, 8 Dec 2023 13:54:46 +0800
+Subject: [PATCH 4/5] mediatek:eqos support mtk hqos
+
+---
+ .../htdocs/luci-static/resources/view/eqos.js |  8 +++--
+ .../luci-app-eqos-mtk/po/templates/eqos.pot   | 12 +++++--
+ .../luci-app-eqos-mtk/po/zh_Hans/eqos.po      | 16 ++++++---
+ .../luci-app-eqos-mtk/root/etc/config/eqos    |  2 +-
+ .../luci-app-eqos-mtk/root/etc/init.d/eqos    | 12 ++++---
+ .../luci-app-eqos-mtk/root/usr/sbin/eqos      | 35 +++++++++++++++----
+ package/mtk/drivers/mt_wifi/Makefile          |  2 +-
+ .../net/ethernet/mediatek/mtk_eth_soc.h       |  2 +-
+ 8 files changed, 64 insertions(+), 25 deletions(-)
+
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/htdocs/luci-static/resources/view/eqos.js b/package/mtk/applications/luci-app-eqos-mtk/htdocs/luci-static/resources/view/eqos.js
+index 195d399a9f..9d303a66e8 100644
+--- a/package/mtk/applications/luci-app-eqos-mtk/htdocs/luci-static/resources/view/eqos.js
++++ b/package/mtk/applications/luci-app-eqos-mtk/htdocs/luci-static/resources/view/eqos.js
+@@ -34,7 +34,7 @@ return view.extend({
+ 		o.datatype = 'and(uinteger,min(1))';
+ 		o.rmempty = false;
+ 
+-		s = m.section(form.TableSection, 'device', _('Speed limit based on IP address'));
++		s = m.section(form.TableSection, 'device', _('Speed limit based on IP address(using unique comment which is less than 32 and no equal to 8 will enable hardware QOS)'));
+ 		s.addremove = true;
+ 		s.anonymous = true;
+ 		s.sortable = true;
+@@ -52,15 +52,17 @@ return view.extend({
+ 				}
+ 		o.rmempty = false;
+ 
+-		o = s.option(form.Value, 'download', _('Download speed (Mbit/s)'));
++		o = s.option(form.Value, 'download', _('Download speed (kbit/s)'));
+ 		o.datatype = 'and(uinteger,min(0))';
+ 		o.rmempty = false;
+ 
+-		o = s.option(form.Value, 'upload', _('Upload speed (Mbit/s)'));
++		o = s.option(form.Value, 'upload', _('Upload speed (kbit/s)'));
+ 		o.datatype = 'and(uinteger,min(0))';
+ 		o.rmempty = false;
+ 
+ 		o = s.option(form.Value, 'comment', _('Comment'));
++		o.datatype = 'and(uinteger,min(1))';
++		o.rmempty = false;
+ 
+ 		return m.render();
+ 	}
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/po/templates/eqos.pot b/package/mtk/applications/luci-app-eqos-mtk/po/templates/eqos.pot
+index b90005646b..e68b05b81f 100644
+--- a/package/mtk/applications/luci-app-eqos-mtk/po/templates/eqos.pot
++++ b/package/mtk/applications/luci-app-eqos-mtk/po/templates/eqos.pot
+@@ -6,7 +6,6 @@ msgid "Comment"
+ msgstr ""
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:28
+-#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:56
+ msgid "Download speed (Mbit/s)"
+ msgstr ""
+ 
+@@ -33,7 +32,7 @@ msgid "Network speed control service."
+ msgstr ""
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:38
+-msgid "Speed limit based on IP address"
++msgid "Speed limit based on IP address(using unique comment which is less than 32 and no equal to 8 will enable hardware QOS)"
+ msgstr ""
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:29
+@@ -45,6 +44,13 @@ msgid "Total upload bandwidth."
+ msgstr ""
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:33
+-#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:60
+ msgid "Upload speed (Mbit/s)"
+ msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:56
++msgid "Download speed (kbit/s)"
++msgstr ""
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:60
++msgid "Upload speed (kbit/s)"
++msgstr ""
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/po/zh_Hans/eqos.po b/package/mtk/applications/luci-app-eqos-mtk/po/zh_Hans/eqos.po
+index ff511eb25d..ffdcd8cf8a 100644
+--- a/package/mtk/applications/luci-app-eqos-mtk/po/zh_Hans/eqos.po
++++ b/package/mtk/applications/luci-app-eqos-mtk/po/zh_Hans/eqos.po
+@@ -11,10 +11,9 @@ msgstr ""
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:64
+ msgid "Comment"
+-msgstr "注释"
++msgstr "编号"
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:28
+-#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:56
+ msgid "Download speed (Mbit/s)"
+ msgstr "下载速度 (Mbit/s)"
+ 
+@@ -41,8 +40,8 @@ msgid "Network speed control service.(Compatiable with Mediatek HNAT)"
+ msgstr "网速控制服务(未设置限速主机可正常使用硬件加速)。"
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:38
+-msgid "Speed limit based on IP address"
+-msgstr "基于 IP 限速(设置为0则上行或下载取消限速并启用硬件加速)"
++msgid "Speed limit based on IP address(using unique comment which is less than 32 and no equal to 8 will enable hardware QOS)"
++msgstr "基于 IP 限速(设置小于32且不为8的唯一编号将启用硬件QOS.速度设置为0则取消限速)"
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:29
+ msgid "Total download bandwidth."
+@@ -53,6 +52,13 @@ msgid "Total upload bandwidth."
+ msgstr "总上传带宽。"
+ 
+ #: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:33
+-#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:60
+ msgid "Upload speed (Mbit/s)"
+ msgstr "上传速度 (Mbit/s)"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:56
++msgid "Download speed (kbit/s)"
++msgstr "下载速度 (kbit/s)"
++
++#: applications/luci-app-eqos/htdocs/luci-static/resources/view/eqos.js:60
++msgid "Upload speed (kbit/s)"
++msgstr "上传速度 (kbit/s)"
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/etc/config/eqos b/package/mtk/applications/luci-app-eqos-mtk/root/etc/config/eqos
+index 39a1772829..886d7e136f 100644
+--- a/package/mtk/applications/luci-app-eqos-mtk/root/etc/config/eqos
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/etc/config/eqos
+@@ -9,4 +9,4 @@ config eqos 'config'
+ #	option ip       "192.168.1.100"
+ #	option download 10
+ #	option upload   5
+-#	option comment  "test"
++#	option comment  1
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/etc/init.d/eqos b/package/mtk/applications/luci-app-eqos-mtk/root/etc/init.d/eqos
+index 22fea7a5ff..f75943c1d5 100755
+--- a/package/mtk/applications/luci-app-eqos-mtk/root/etc/init.d/eqos
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/etc/init.d/eqos
+@@ -11,12 +11,13 @@ parse_device() {
+ 	config_get_bool enabled "$cfg" "enabled" "1"
+ 	[ "$enabled" -eq "1" ] || return 1
+ 
+-	local ip download upload
++	local ip download upload comment
+ 	config_get ip "$cfg" ip
+ 	config_get download "$cfg" "download"
+ 	config_get upload "$cfg" "upload"
++	config_get comment "$cfg" "comment"
+ 
+-	eqos add "$ip" "$download" "$upload"
++	eqos add "$ip" "$download" "$upload" "$comment"
+ }
+ 
+ start_service() {
+@@ -26,11 +27,12 @@ start_service() {
+ 	config_get_bool enabled "config" "enabled" "0"
+ 	[ "$enabled" -eq "1" ] || return 1
+ 
+-	local download upload
++	local download upload comment
+ 	config_get download "config" "download"
+ 	config_get upload "config" "upload"
+-
+-	eqos start "$download" "$upload"
++	config_get comment "comment" "comment"
++	
++	eqos start "$download" "$upload" "$comment"
+ 
+ 	config_foreach parse_device "device"
+ }
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos b/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
+index 8c24fdba9e..58edcca796 100755
+--- a/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
+@@ -30,21 +30,42 @@ case "$1" in
+ 	"stop")
+ 		stop_qos
+ 		iptables -t mangle -D FORWARD  -j eqos
++		echo 0 > /sys/kernel/debug/hnat/qos_toggle
+ 	;;
+ 	"start")
+ 		stop_qos
+-		iptables -t mangle -F eqos
+ 		start_qos $2 $3
+ 		iptables -t mangle -N eqos
++		iptables -t mangle -F eqos
+ 		iptables -t mangle -D FORWARD  -j eqos
+ 		iptables -t mangle -A FORWARD  -j eqos
++		echo 1 > /sys/kernel/debug/hnat/qos_toggle
++		echo 0 wrr 10000000 > /sys/kernel/debug/hnat/qdma_sch0
++		echo 0 wrr 10000000 > /sys/kernel/debug/hnat/qdma_sch1
++		echo 0 wrr 10000000 > /sys/kernel/debug/hnat/qdma_sch2
++		echo 0 wrr 10000000 > /sys/kernel/debug/hnat/qdma_sch3
++		echo 0 0 0 0 0 4 4 > /sys/kernel/debug/hnat/qdma_txq0
++		echo 1 0 0 0 0 4 4 > /sys/kernel/debug/hnat/qdma_txq8
+ 	;;
+ 	"add")
+ 		ip="$2"
+ 		dl="$3"
+ 		up="$4"
+-		
++		id="$5" idpair=$((id+32))
+ 		cnt=$(tc class show dev $dev | wc -l)
++		if [ $id -lt 32 ]; then
++		
++		iptables -t mangle -D eqos -s $ip -j MARK --set-mark ${id}
++		iptables -t mangle -D eqos -d $ip -j MARK --set-mark ${idpair}
++		if [ $up -ne 0 ]; then
++		echo 2 0 0 1 ${up} 4 4 > /sys/kernel/debug/hnat/qdma_txq${id}
++		iptables -t mangle -A eqos -s $ip -j MARK --set-mark ${id}
++		fi
++		if [ $dl -ne 0 ]; then
++		echo 2 0 0 1 ${dl} 4 4 > /sys/kernel/debug/hnat/qdma_txq${idpair}
++		iptables -t mangle -A eqos -d $ip -j MARK --set-mark ${idpair}
++		fi
++		else
+ 		iptables -t mangle -D eqos -s $ip -j MARK --set-mark 0x99
+ 		iptables -t mangle -D eqos -d $ip -j MARK --set-mark 0x99
+ 		if [ $up -ne 0 ]; then
+@@ -53,10 +74,12 @@ case "$1" in
+ 		if [ $dl -ne 0 ]; then
+ 		iptables -t mangle -A eqos -d $ip -j MARK --set-mark 0x99
+ 		fi
+-		tc class add dev $dev parent 1:1 classid 1:1$cnt htb rate ${dl}mbit ceil ${dl}mbit
++		
++		fi
++		tc class add dev $dev parent 1:1 classid 1:1$cnt htb rate ${dl}kbit ceil ${dl}kbit
+ 		tc filter add dev $dev parent 1:0 protocol ip u32 match ip dst $ip flowid 1:1$cnt
+ 		
+-		tc class add dev ${dev}-ifb parent 1:1 classid 1:1$cnt htb rate ${up}mbit ceil ${up}mbit
++		tc class add dev ${dev}-ifb parent 1:1 classid 1:1$cnt htb rate ${up}kbit ceil ${up}kbit
+ 		tc filter add dev ${dev}-ifb parent 1:0 protocol ip u32 match ip src $ip flowid 1:1$cnt
+ 	;;
+ 	*)
+@@ -64,9 +87,9 @@ case "$1" in
+ 		echo "Commands:"
+ 		echo "  start dl_rate up_rate       #Total bandwidth (Mbit/s)"
+ 		echo "  stop"
+-		echo "  add ip dl_rate up_rate      #Limiting the bandwidth of a single IP (Mbit/s)"
++		echo "  add ip dl_rate up_rate      #Limiting the bandwidth of a single IP (kbit/s)"
+ 		echo "Example:"
+ 		echo "  $0 start 30 20              # Total bandwidth: down 30Mbit/s up 20Mbit/s"
+-		echo "  $0 add 192.168.22.12 10 2   # down 10Mbit/s  up 2Mbit/s"
++		echo "  $0 add 192.168.22.12 10 2   # down 10kbit/s  up 2kbit/s"
+ 	;;
+ esac
+diff --git a/package/mtk/drivers/mt_wifi/Makefile b/package/mtk/drivers/mt_wifi/Makefile
+index 2e8c2aa253..c01e96b450 100644
+--- a/package/mtk/drivers/mt_wifi/Makefile
++++ b/package/mtk/drivers/mt_wifi/Makefile
+@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/kernel.mk
+ PKG_NAME:=mt_wifi
+ 
+ MT7981_FW_DIR := mt7981-fw-20230306
+-MT7986_FW_DIR := mt7986-fw-20230421
++MT7986_FW_DIR := mt7986-fw-20230808
+ 
+ ifeq ($(CONFIG_MTK_CHIP_MT7981),y)
+ PKG_SUFFIX:=mt7981
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_eth_soc.h b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+index a372bef416..13b63de8ba 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+@@ -473,7 +473,7 @@
+ #define MTK_STAT_OFFSET		0x40
+ 
+ /* QDMA TX NUM */
+-#define MTK_QDMA_TX_NUM		16
++#define MTK_QDMA_TX_NUM		64
+ #define MTK_QDMA_TX_MASK	((MTK_QDMA_TX_NUM) - 1)
+ #define QID_LOW_BITS(x)         ((x) & 0xf)
+ #define QID_HIGH_BITS(x)        ((((x) >> 4) & 0x3) << 20)
+-- 
+2.43.0
+

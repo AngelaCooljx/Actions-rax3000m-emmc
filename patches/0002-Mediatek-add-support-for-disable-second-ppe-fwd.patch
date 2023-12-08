@@ -1,0 +1,26 @@
+From d3b9767f05d1f8250bf1ecb08ce281169888020e Mon Sep 17 00:00:00 2001
+From: padavanonly <83120842+padavanonly@users.noreply.github.com>
+Date: Tue, 5 Dec 2023 15:43:21 +0800
+Subject: [PATCH 2/5] Mediatek:add support for disable second ppe fwd
+
+---
+ .../files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c    | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+index 39c6c9ce98..232ae91f61 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+@@ -151,7 +151,8 @@ void set_gmac_ppe_fwd(int id, int enable)
+ 
+ 	/*disabled */
+ 	val = readl(reg);
+-	if ((val & GDM_ALL_FRC_MASK) == BITS_GDM_ALL_FRC_P_PPE)
++	if (((val & GDM_ALL_FRC_MASK) == BITS_GDM_ALL_FRC_P_PPE ||
++	     (val & GDM_ALL_FRC_MASK) == BITS_GDM_ALL_FRC_P_PPE1))
+ 		cr_set_field(reg, GDM_ALL_FRC_MASK,
+ 			     BITS_GDM_ALL_FRC_P_CPU_PDMA);
+ }
+-- 
+2.43.0
+
