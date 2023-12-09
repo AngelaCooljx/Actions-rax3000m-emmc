@@ -109,7 +109,7 @@ jobs:
       if: env.USE_NX30PRO_EEPROM == 'true'
       run: |
         mkdir openwrt/target/linux/mediatek/mt7981/base-files/lib/firmware
-        cp bin/nx30pro_eeprom.bin openwrt/target/linux/mediatek/mt7981/base-files/lib/firmware/MT7981_iPAiLNA_EEPROM.bin
+        cp eeprom/nx30pro_eeprom.bin openwrt/target/linux/mediatek/mt7981/base-files/lib/firmware/MT7981_iPAiLNA_EEPROM.bin
         sed -i 's/caldata_extract_mmc/# caldata_extract_mmc/' openwrt/target/linux/mediatek/mt7981/base-files/lib/preinit/90_extract_caldata
         sed -i 's#./files/mt7981-default-eeprom/MT7981_iPAiLNA_EEPROM.bin##' openwrt/package/mtk/drivers/mt_wifi/Makefile
 

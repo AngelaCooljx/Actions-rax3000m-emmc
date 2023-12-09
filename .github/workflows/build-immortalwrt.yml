@@ -16,6 +16,11 @@ permissions: write-all
 on:
   workflow_dispatch:
     inputs:
+      USE_NX30PRO_EEPROM:
+        description: 'Use nx30pro eeprom'
+        required: true
+        default: true
+        type: boolean
       USE_52MHZ:
         description: 'Use 52MHz max-frequency'
         required: true
@@ -46,6 +51,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        echo "USE_NX30PRO_EEPROM=${{ github.event.inputs.USE_NX30PRO_EEPROM }}" >> $GITHUB_ENV
         echo "USE_52MHZ=${{ github.event.inputs.USE_52MHZ }}" >> $GITHUB_ENV
         chmod +x $FREE_DISK_SH && $FREE_DISK_SH
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
@@ -79,16 +85,17 @@ jobs:
         ./scripts/feeds update -a && ./scripts/feeds install -a        
         chmod +x $GITHUB_WORKSPACE/$DIY_SH && $GITHUB_WORKSPACE/$DIY_SH
 
-    - name: 导入补丁和配置 & 下载文件
+    - name: 导入补丁和配置
       run: |
         [ -e files ] && mv files openwrt/files
         cat configs/rax3000m-emmc.config >> openwrt/.config
-        cd openwrt
-        chmod +x $GITHUB_WORKSPACE/$CLASH_CORE && $GITHUB_WORKSPACE/$CLASH_CORE
-        make defconfig
-        make download -j8 V=10
-        find dl -size -1024c -exec ls -l {} \;
-        find dl -size -1024c -exec rm -f {} \;
+
+    - name: 设置是否使用 nx30pro eeprom
+      if: env.USE_NX30PRO_EEPROM == 'true'
+      run: |
+        mkdir -p openwrt/target/linux/mediatek/filogic/base-files/lib/firmware/mediatek
+        cp eeprom/nx30pro_eeprom.bin openwrt/target/linux/mediatek/filogic/base-files/lib/firmware/mediatek
+        sed -i -e '/caldata_extract_mmc "factory" 0x0 0x1000/ a\           cp /lib/firmware/mediatek/nx30pro_eeprom.bin /lib/firmware/mediatek/mt7981_eeprom_mt7976_dbdc.bin' openwrt/target/linux/mediatek/filogic/base-files/etc/hotplug.d/firmware/11-mt76-caldata
 
     - name: 设置 dts 闪存频率
       if: env.USE_52MHZ == 'true'
@@ -96,6 +103,15 @@ jobs:
         sed -i -e '/bus-width = <8>;/ a\	cap-mmc-highspeed;' openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts
         sed -i 's/26000000/52000000/g' openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts
         grep max-frequency openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts
+
+    - name: 下载文件
+      run: |
+        cd openwrt
+        chmod +x $GITHUB_WORKSPACE/$CLASH_CORE && $GITHUB_WORKSPACE/$CLASH_CORE
+        make defconfig
+        make download -j8 V=10
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
 
     - name: 编译固件中
       id: compile
@@ -140,9 +156,18 @@ jobs:
       if: env.UPLOAD_RELEASE == 'true' && steps.compile.outputs.status == 'success' && !cancelled()
       run: |
         echo -e "### immortalwrt-23.05-SNAPSHOT-rax3000m-emmc-ubootmod" >> release.txt
+        eeprom_status=""
+        if [ -e openwrt/target/linux/mediatek/filogic/base-files/lib/firmware/mediatek/nx30pro_eeprom.bin ] ; then
+          echo "- eeprom 使用 H3C NX30 Pro 提取版本" >> release.txt
+          eeprom_status="nx30pro_eeprom"
+        else
+          echo "- eeprom 未修改" >> release.txt
+          eeprom_status="default_eeprom"
+        fi
         max_frequency=$(($(grep -oP "max-frequency = <\K[0-9]*" openwrt/target/linux/mediatek/dts/mt7981b-cmcc-rax3000m-emmc-ubootmod.dts) / 1000000))
         echo "- 使用闪存频率: ${max_frequency}MHz" >> release.txt
-        echo "release_tag=$(date +"%Y.%m.%d-23.05-SNAPSHOT-rax3000m-emmc-ubootmod-${max_frequency}MHz")" >> $GITHUB_OUTPUT
+        release_tag=$(date +"%Y.%m.%d-23.05-SNAPSHOT-rax3000m-emmc-ubootmod-${eeprom_status}-${max_frequency}MHz")
+        echo "release_tag=${release_tag}" >> $GITHUB_OUTPUT
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传固件发布
