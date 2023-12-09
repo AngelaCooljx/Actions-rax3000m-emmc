@@ -14,10 +14,6 @@ permissions: write-all
 # 开启写权限，防止无法上传到release
 
 on:
-  repository_dispatch:
-  schedule:
-   - cron: 0 18 * * 5
-   # 分,时,日,月,星期。每周五 18 时执行一次 (UTC时间)
   workflow_dispatch:
     inputs:
       USE_MTWIFI_CFG:

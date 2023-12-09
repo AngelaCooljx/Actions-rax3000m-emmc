@@ -18,7 +18,7 @@
 加入由 [1715173329 天灵](https://github.com/1715173329) 使用 js 重写，[237大佬](https://www.right.com.cn/forum/?364126) 适配硬件 QoS 的 [luci-app-eqos-mtk](https://github.com/padavanonly/immortalwrt-mt798x/commit/7c8019ce4bcb1a79c01c517b62e49f059ca70049)
 
 ## 使用说明
-每周五 18 时自动执行或在 Actions 选择该工作流手动点击 Run workflow 执行编译，等待固件编译完成上传至 releases 发布即可下载
+在 Actions 选择该工作流手动点击 Run workflow 执行编译，等待固件编译完成上传至 releases 发布即可下载
 
 ### 配置说明
 - 默认 LAN IP 已更改为 `192.168.6.1`，可在 `scripts/diy.sh` 处修改
