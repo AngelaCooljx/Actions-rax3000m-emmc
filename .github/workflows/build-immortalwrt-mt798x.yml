@@ -87,6 +87,10 @@ jobs:
     - name: 更新 & 安装 feeds & 执行脚本
       run: |
         cd openwrt
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git fetch https://github.com/padavanonly/immortalwrt-mt798x
+        git merge FETCH_HEAD
         ./scripts/feeds update -a && ./scripts/feeds install -a        
         chmod +x $GITHUB_WORKSPACE/$DIY_SH && $GITHUB_WORKSPACE/$DIY_SH
 
@@ -94,11 +98,6 @@ jobs:
       run: |
         [ -e files ] && mv files openwrt/files
         cat configs/rax3000m-emmc_mtksdk.config >> openwrt/.config
-        cp patches/*.patch openwrt
-        cd openwrt
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "github-actions[bot]"
-        git am *.patch
 
     - name: 设置无线控制界面样式
       if: env.USE_MTWIFI_CFG == 'true'
