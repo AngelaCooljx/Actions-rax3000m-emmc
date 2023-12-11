@@ -1,0 +1,202 @@
+From 403b068c81021c9647f46579788039d3aa33835f Mon Sep 17 00:00:00 2001
+From: padavanonly <padavanonly@github.com>
+Date: Sun, 10 Dec 2023 11:33:28 +0800
+Subject: [PATCH 06/10] Mediatek: Hqos support using dscp tag
+
+---
+ .../luci-app-eqos-mtk/root/usr/sbin/eqos      | 25 ++++++++++++++++---
+ .../net/ethernet/mediatek/mtk_hnat/hnat.c     |  4 +--
+ .../net/ethernet/mediatek/mtk_hnat/hnat.h     |  1 +
+ .../ethernet/mediatek/mtk_hnat/hnat_debugfs.c | 20 +++++++++++++++
+ .../ethernet/mediatek/mtk_hnat/hnat_nf_hook.c |  8 +++++-
+ 5 files changed, 51 insertions(+), 7 deletions(-)
+
+diff --git a/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos b/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
+index 58edcca796..b0c9c92a1d 100755
+--- a/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
++++ b/package/mtk/applications/luci-app-eqos-mtk/root/usr/sbin/eqos
+@@ -31,9 +31,23 @@ case "$1" in
+ 		stop_qos
+ 		iptables -t mangle -D FORWARD  -j eqos
+ 		echo 0 > /sys/kernel/debug/hnat/qos_toggle
++		sed -i '/\/etc\/init.d\/eqos start/d' /etc/firewall.user
++		iptables -t mangle -D FORWARD -i br-lan -j DSCP --set-dscp 0
++		iptables -t mangle -D FORWARD -o br-lan -j DSCP --set-dscp 0
++		echo "10 0" > /sys/kernel/debug/hnat/hnat_setting
++		for i in $(seq 0 7); do
++		echo 0 0 0 0 0 0 0 > $hqos_path/qdma_txq$i
++		done
++		for i in $(seq 8 15); do
++		echo 1 0 0 0 0 0 0 > $hqos_path/qdma_txq$i
++		done	
+ 	;;
+ 	"start")
+ 		stop_qos
++		iptables -t mangle -D FORWARD -i br-lan -j DSCP --set-dscp 0
++		iptables -t mangle -D FORWARD -o br-lan -j DSCP --set-dscp 0
++		iptables -t mangle -A FORWARD -i br-lan -j DSCP --set-dscp 0
++		iptables -t mangle -A FORWARD -o br-lan -j DSCP --set-dscp 0
+ 		start_qos $2 $3
+ 		iptables -t mangle -N eqos
+ 		iptables -t mangle -F eqos
+@@ -46,6 +60,9 @@ case "$1" in
+ 		echo 0 wrr 10000000 > /sys/kernel/debug/hnat/qdma_sch3
+ 		echo 0 0 0 0 0 4 4 > /sys/kernel/debug/hnat/qdma_txq0
+ 		echo 1 0 0 0 0 4 4 > /sys/kernel/debug/hnat/qdma_txq8
++		sed -i '/\/etc\/init.d\/eqos start/d' /etc/firewall.user
++		echo "/etc/init.d/eqos start" >> /etc/firewall.user
++		echo "10 1" > /sys/kernel/debug/hnat/hnat_setting
+ 	;;
+ 	"add")
+ 		ip="$2"
+@@ -55,15 +72,15 @@ case "$1" in
+ 		cnt=$(tc class show dev $dev | wc -l)
+ 		if [ $id -lt 32 ]; then
+ 		
+-		iptables -t mangle -D eqos -s $ip -j MARK --set-mark ${id}
+-		iptables -t mangle -D eqos -d $ip -j MARK --set-mark ${idpair}
++		iptables -t mangle -D eqos -s $ip -j DSCP --set-dscp ${id}
++		iptables -t mangle -D eqos -d $ip -j DSCP --set-dscp ${idpair}
+ 		if [ $up -ne 0 ]; then
+ 		echo 2 0 0 1 ${up} 4 4 > /sys/kernel/debug/hnat/qdma_txq${id}
+-		iptables -t mangle -A eqos -s $ip -j MARK --set-mark ${id}
++		iptables -t mangle -A eqos -s $ip -j DSCP --set-dscp ${id}
+ 		fi
+ 		if [ $dl -ne 0 ]; then
+ 		echo 2 0 0 1 ${dl} 4 4 > /sys/kernel/debug/hnat/qdma_txq${idpair}
+-		iptables -t mangle -A eqos -d $ip -j MARK --set-mark ${idpair}
++		iptables -t mangle -A eqos -d $ip -j DSCP --set-dscp ${idpair}
+ 		fi
+ 		else
+ 		iptables -t mangle -D eqos -s $ip -j MARK --set-mark 0x99
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+index 522c96777b..690b1b87be 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+@@ -755,10 +755,10 @@ static int hnat_probe(struct platform_device *pdev)
+ #else
+ 	hnat_priv->ppe_base[0] = hnat_priv->fe_base + 0xe00;
+ #endif
+-	hnat_priv->nf_stat_en = true; /* enable ppe update nf stat by default */
++	hnat_priv->nf_stat_en = true; /* enable nf_stat_en by default */
+ 	hnat_priv->ipv6_en = true; /* enable ipv6 by default */
+ 	hnat_priv->guest_en = true; /* enable guest wifi by default */
+-
++	hnat_priv->dscp_en = false;
+ 	err = hnat_init_debugfs(hnat_priv);
+ 	if (err)
+ 		return err;
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h
+index 8275a9f890..cf98da9430 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h
+@@ -684,6 +684,7 @@ struct mtk_hnat {
+ 	bool nf_stat_en;
+ 	bool ipv6_en;
+ 	bool guest_en;
++	bool dscp_en;
+ };
+ 
+ struct extdev_entry {
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_debugfs.c b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_debugfs.c
+index 58a0b3a2c4..f13526a2ec 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_debugfs.c
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_debugfs.c
+@@ -573,6 +573,7 @@ int cr_set_usage(int level)
+ 	pr_info("              7     0~1        Set hnat counter update to nf_conntrack\n");
+ 	pr_info("              8     0~1        Set hnat disable/enable ipv6\n");
+ 	pr_info("              9     0~1        Set hnat disable/enable guest (rax1/ra1)\n");
++	pr_info("             10     0~1        Set hnat disable/enable dscp setting\n");
+ 
+ 	return 0;
+ }
+@@ -701,6 +702,23 @@ int set_ipv6_toggle(int toggle)
+ 	return 0;
+ }
+ 
++int set_dscp_toggle(int toggle)
++{
++	struct mtk_hnat *h = hnat_priv;
++
++	if (toggle == 1)
++		pr_info("Enable hqos dscp setting\n");
++	else if (toggle == 0)
++		pr_info("Disable hqos dscp setting\n");
++	else {
++		pr_info("input error, current hqos dscp setting=%d\n", h->dscp_en);
++		return 0;
++	}
++	h->dscp_en = toggle;
++
++	return 0;
++}
++
+ void mtk_ppe_dev_hook(const char *name, int toggle)
+ {
+ 	struct net_device *dev;
+@@ -754,6 +772,7 @@ static const debugfs_write_func cr_set_func[] = {
+ 	[4] = udp_bind_lifetime, [5] = tcp_keep_alive,
+ 	[6] = udp_keep_alive,    [7] = set_nf_update_toggle,
+ 	[8] = set_ipv6_toggle,   [9] = set_guest_toggle,
++	[10] = set_dscp_toggle,
+ };
+ 
+ int read_mib(struct mtk_hnat *h, u32 ppe_id,
+@@ -1531,6 +1550,7 @@ ssize_t hnat_setting_write(struct file *file, const char __user *buffer,
+ 	case 7:
+ 	case 8:
+ 	case 9:
++	case 10:
+ 		p_token = strsep(&p_buf, p_delimiter);
+ 		if (!p_token)
+ 			arg1 = 0;
+diff --git a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c
+index 905fea31aa..3be0520128 100644
+--- a/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c
++++ b/target/linux/mediatek/files-5.4/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c
+@@ -1207,6 +1207,7 @@ static unsigned int skb_to_hnat_info(struct sk_buff *skb,
+ 	u32 qid = 0;
+ 	u32 port_id = 0;
+ 	int mape = 0;
++	u8  dscp = 0;
+ 
+ 	ct = nf_ct_get(skb, &ctinfo);
+ 
+@@ -1293,6 +1294,7 @@ static unsigned int skb_to_hnat_info(struct sk_buff *skb,
+ 
+ 			} else {
+ 				entry.ipv4_hnapt.iblk2.dscp = iph->tos;
++				dscp = iph->tos;
+ 				if (hnat_priv->data->per_flow_accounting)
+ 					entry.ipv4_hnapt.iblk2.mibf = 1;
+ 
+@@ -1472,6 +1474,7 @@ static unsigned int skb_to_hnat_info(struct sk_buff *skb,
+ 				mape = 1;
+ 				entry.ipv4_hnapt.iblk2.dscp =
+ 					foe->ipv4_hnapt.iblk2.dscp;
++				dscp = foe->ipv4_hnapt.iblk2.dscp;
+ 				if (hnat_priv->data->per_flow_accounting)
+ 					entry.ipv4_hnapt.iblk2.mibf = 1;
+ 
+@@ -1485,6 +1488,7 @@ static unsigned int skb_to_hnat_info(struct sk_buff *skb,
+ 				entry.ipv4_hnapt.sport = foe->ipv4_hnapt.sport;
+ 				entry.ipv4_hnapt.dport = foe->ipv4_hnapt.dport;
+ 
++
+ 				entry.ipv4_hnapt.new_sip =
+ 					foe->ipv4_hnapt.new_sip;
+ 				entry.ipv4_hnapt.new_dip =
+@@ -1624,7 +1628,9 @@ static unsigned int skb_to_hnat_info(struct sk_buff *skb,
+ 		qid = port_id & MTK_QDMA_TX_MASK;
+ 	else
+ 		qid = 0;
+-
++	if ((IS_HQOS_MODE) && (dscp!=0) &&(hnat_priv->dscp_en))
++		qid = (dscp>>2)& (MTK_QDMA_TX_MASK);
++		
+ 	if (IS_IPV4_GRP(foe)) {
+ 		entry.ipv4_hnapt.iblk2.dp = gmac;
+ 		entry.ipv4_hnapt.iblk2.port_mg =
+-- 
+2.43.0
+

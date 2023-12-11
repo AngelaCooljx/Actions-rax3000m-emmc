@@ -1,7 +1,7 @@
-From 639a7681e4154da6f38c9a9f4ce9029ca8277c03 Mon Sep 17 00:00:00 2001
+From 648de47c2e305f7dd8839b331a491fb515e7feb4 Mon Sep 17 00:00:00 2001
 From: padavanonly <padavanonly@github.com>
 Date: Thu, 7 Dec 2023 15:38:34 +0800
-Subject: [PATCH 3/5] add luci-eqos-mtk(fork from tianling's version)
+Subject: [PATCH 03/10] add luci-eqos-mtk(fork from tianling's version)
 
 ---
  defconfig/mt7981-ax3000-mtwifi-cfg.config     |  1 +

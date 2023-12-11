@@ -1,7 +1,7 @@
-From d4190573187034f8e6ce4640a01ca209c81b5a63 Mon Sep 17 00:00:00 2001
+From fb9c04d032792de000a9a38c35a2c67ddfda907b Mon Sep 17 00:00:00 2001
 From: padavanonly <padavanonly@github.com>
 Date: Fri, 8 Dec 2023 13:54:46 +0800
-Subject: [PATCH 4/5] mediatek:eqos support mtk hqos
+Subject: [PATCH 04/10] mediatek:eqos support mtk hqos
 
 ---
  .../htdocs/luci-static/resources/view/eqos.js |  8 +++--
