@@ -24,7 +24,7 @@ on:
       USE_52MHZ:
         description: 'Use 52MHz max-frequency'
         required: true
-        default: true
+        default: false
         type: boolean
 
 env:
